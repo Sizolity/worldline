@@ -1,0 +1,28 @@
+# --- build artifacts ---
+/bin/
+rpg-cli
+rpg-cli.exe
+rpg-server
+rpg-server.exe
+coverage.out
+
+# --- editors / IDEs ---
+.DS_Store
+.idea/
+.vscode/
+.worktrees/
+
+# --- Cursor (chat exports, project files) ---
+.cursor/
+cursor_*.md
+.cursor-tutor/
+
+# --- runtime / scratch ---
+/tmp-workspace/
+
+# --- secrets / local env ---
+.env
+.env.local
+.envrc
+*.pem
+*.key
