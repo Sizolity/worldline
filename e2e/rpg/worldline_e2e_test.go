@@ -11,14 +11,15 @@ import (
 
 	openai "github.com/cloudwego/eino-ext/components/model/openai"
 
-	einobeat "github.com/sizolity/worldline/agent/eino/beat"
-	einostructured "github.com/sizolity/worldline/agent/eino/structured"
-	worldmodel "github.com/sizolity/worldline/world/model"
-	"github.com/sizolity/worldline/world/store"
-	"github.com/sizolity/worldline/rpg/narrator"
-	"github.com/sizolity/worldline/rpg/role"
-	"github.com/sizolity/worldline/rpg/session"
-	"github.com/sizolity/worldline/rpg/story"
+	"github.com/sizolity/worldline/internal/agent/react"
+	"github.com/sizolity/worldline/internal/agent/typed"
+	worldmodel "github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/store"
+	"github.com/sizolity/worldline/internal/rpg/mod"
+	"github.com/sizolity/worldline/internal/rpg/narrator"
+	"github.com/sizolity/worldline/internal/rpg/role"
+	"github.com/sizolity/worldline/internal/rpg/session"
+	"github.com/sizolity/worldline/internal/rpg/story"
 )
 
 func TestBeat_DeepSeek_WorldLine_E2E(t *testing.T) {
@@ -82,13 +83,22 @@ func TestBeat_DeepSeek_WorldLine_E2E(t *testing.T) {
 		t.Fatalf("seed worldlines: %v", err)
 	}
 
-	suggestAgent := einostructured.NewToolCall[narrator.SuggestParams](chatModel, narrator.SuggestToolName, narrator.SuggestToolDesc)
-	gm, err := narrator.New(suggestAgent)
+	modRoot, err := mod.LocateRoot()
+	if err != nil {
+		t.Fatalf("locate mod root: %v", err)
+	}
+	style, err := mod.LoadStyle(modRoot, "shuoshu")
+	if err != nil {
+		t.Fatalf("load mod style: %v", err)
+	}
+
+	suggestAgent := typed.NewToolCall[narrator.SuggestParams](chatModel, narrator.SuggestToolName, narrator.SuggestToolDesc)
+	gm, err := narrator.New(suggestAgent, narrator.WithStyle(style))
 	if err != nil {
 		t.Fatalf("create narrator: %v", err)
 	}
 
-	beatAgent := einobeat.New(chatModel)
+	beatAgent := react.New(chatModel)
 	player := role.Player{ID: "player-1", Name: "Kael", CharacterID: "hero-kael"}
 
 	sess, err := session.New(session.Config{
