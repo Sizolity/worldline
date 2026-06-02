@@ -75,7 +75,7 @@ func Render(w model.World) Context {
 		Entities:    renderEntities(w.Entities),
 		Facts:       renderFacts(w.Facts),
 		Relations:   renderRelations(w.Relations),
-		Memories:    renderMemories(w.Memory),
+		Memories:    renderMemories(w.Memories),
 		Threads:     renderThreads(w.Threads),
 	}
 }

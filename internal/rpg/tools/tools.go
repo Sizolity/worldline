@@ -60,6 +60,32 @@ func (tc *ToolContext) Roll(_ context.Context, params *RollParams) (string, erro
 	return string(result), nil
 }
 
+// AdvanceTime records that in-fiction time advanced this beat. It does NOT
+// append to PendingEffects: time advance is a separate out-of-band pacing
+// signal the session reads via GetPendingTimeAdvance and maps onto
+// story.TimeDelta. Unknown scales are rejected so config/usage errors are
+// loud; count is clamped to a minimum of 1.
+func (tc *ToolContext) AdvanceTime(_ context.Context, params *AdvanceTimeParams) (string, error) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	count := params.Count
+	if count < 1 {
+		count = 1
+	}
+	switch params.Scale {
+	case "scene":
+		tc.pendingTime.Scenes += count
+	case "day":
+		tc.pendingTime.Days += count
+	case "chapter":
+		tc.pendingTime.Chapters += count
+	default:
+		return "", fmt.Errorf("advance_time: unknown scale %q (want scene|day|chapter)", params.Scale)
+	}
+	data, _ := json.Marshal(map[string]any{"ok": true, "scale": params.Scale, "count": count})
+	return string(data), nil
+}
+
 // Random returns a JSON-encoded { "value": float64 } in [0, 1). No
 // numeric output may surface to the player; the model receives the
 // value, weaves an opaque qualitative description, and stops.

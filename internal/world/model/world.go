@@ -27,7 +27,7 @@ type World struct {
 	Threads     []WorldThread       `json:"threads,omitempty"`
 	EventLog    []WorldEvent        `json:"event_log,omitempty"`
 	EventQueue  []EventQueueItem    `json:"event_queue,omitempty"`
-	Memory      []MemoryRecord      `json:"memory,omitempty"`
+	Memories    []MemoryRecord      `json:"memories,omitempty"`
 	Metadata    WorldMetadata       `json:"metadata,omitempty"`
 }
 

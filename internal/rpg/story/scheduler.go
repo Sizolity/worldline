@@ -7,11 +7,20 @@ import (
 	"github.com/sizolity/worldline/internal/world/model"
 )
 
+// TimeDelta is how much in-fiction time elapsed this beat, per scale.
+// Scenes is the per-beat baseline (normally 1); Days/Chapters come from
+// narrative-declared time skips (the advance_time tool).
+type TimeDelta struct {
+	Scenes   int
+	Days     int
+	Chapters int
+}
+
 // TickInput is the per-beat input to the scheduler.
 type TickInput struct {
-	World     model.World
-	Lines     []WorldLine
-	TimeScale model.WorldTimeKind
+	World model.World
+	Lines []WorldLine
+	Delta TimeDelta
 }
 
 // TickOutput is what the scheduler returns. Events should be applied via
@@ -50,7 +59,7 @@ func Tick(in TickInput, _ *rand.Rand) (TickOutput, error) {
 	}
 
 	for _, line := range in.Lines {
-		updated, events, err := tickOne(line, in.World, in.TimeScale, tensionByThread)
+		updated, events, err := tickOne(line, in.World, in.Delta, tensionByThread)
 		if err != nil {
 			return TickOutput{}, fmt.Errorf("worldline %q: %w", line.ID, err)
 		}
@@ -63,7 +72,7 @@ func Tick(in TickInput, _ *rand.Rand) (TickOutput, error) {
 func tickOne(
 	line WorldLine,
 	world model.World,
-	timeScale model.WorldTimeKind,
+	timeDelta TimeDelta,
 	tensionByThread map[model.ThreadID]float64,
 ) (WorldLine, []model.WorldEvent, error) {
 	var events []model.WorldEvent
@@ -74,7 +83,7 @@ func tickOne(
 	}
 
 	// 1. Drift advancement.
-	delta := driftFor(line.Drift, timeScale)
+	delta := driftFor(line.Drift, timeDelta)
 	if delta != 0 {
 		current, ok := tensionByThread[line.ThreadID]
 		if ok {
@@ -135,19 +144,15 @@ func tickOne(
 	return line, events, nil
 }
 
-// driftFor returns the tension delta applicable at the given time scale.
-// Unknown scales return 0 (no drift). MVP supports scene, day, chapter.
-func driftFor(d Drift, ts model.WorldTimeKind) float64 {
-	switch ts {
-	case model.WorldTimeScene:
-		return d.Scene
-	case model.WorldTimeDay:
-		return d.Day
-	case model.WorldTimeChapter:
-		return d.Chapter
-	default:
-		return 0
-	}
+// driftFor returns the tension delta accrued this beat by summing each
+// drift scale weighted by how much in-fiction time elapsed at that scale.
+// All three scales are live simultaneously: a beat that advances both a
+// scene and several days accrues scene drift + day drift together. Given a
+// deterministic TimeDelta the result is deterministic.
+func driftFor(d Drift, delta TimeDelta) float64 {
+	return d.Scene*float64(delta.Scenes) +
+		d.Day*float64(delta.Days) +
+		d.Chapter*float64(delta.Chapters)
 }
 
 func clamp01(v float64) float64 {

@@ -196,7 +196,7 @@ func TestRuntimeStepAppliesReconcileDirectorProposals(t *testing.T) {
 	world := model.World{
 		ID:   "world_1",
 		Name: "World",
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,
@@ -214,11 +214,11 @@ func TestRuntimeStepAppliesReconcileDirectorProposals(t *testing.T) {
 	if len(got.Proposals) != 1 || got.Proposals[0].ID != "event_reconcile_1" {
 		t.Fatalf("Proposals mismatch: %#v", got.Proposals)
 	}
-	if got.World.Memory[0].TruthStatus != model.TruthStatusDisputed {
-		t.Fatalf("memory was not reconciled: %#v", got.World.Memory[0])
+	if got.World.Memories[0].TruthStatus != model.TruthStatusDisputed {
+		t.Fatalf("memory was not reconciled: %#v", got.World.Memories[0])
 	}
-	if len(got.World.Memory) != 2 || got.World.Memory[1].ID != "memory_2" {
-		t.Fatalf("follow-up memory missing: %#v", got.World.Memory)
+	if len(got.World.Memories) != 2 || got.World.Memories[1].ID != "memory_2" {
+		t.Fatalf("follow-up memory missing: %#v", got.World.Memories)
 	}
 }
 

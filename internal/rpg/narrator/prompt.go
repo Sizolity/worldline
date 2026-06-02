@@ -39,9 +39,11 @@ const (
 // keeps these constraints OUT of the mod author's reach because they
 // underpin player UX contracts and anti-hallucination guarantees:
 //
-//   - tool nomenclature: random / chance / weighted_choice / roll are
-//     internal randomness; results must NEVER surface as visible dice /
+//   - tool nomenclature: random / chance / weighted_choice are internal
+//     randomness; results must NEVER surface as visible dice /
 //     probabilities / numbers in the narrative.
+//   - advance_time signals an in-fiction time skip (a pacing signal that
+//     drives hidden worldlines); the count must NEVER surface as a number.
 //   - cross-system contracts: the action-suggester owns the menu, so the
 //     narrator must NOT enumerate choices at the end of its prose.
 //   - anti-hallucination: never invent entities that are not in the
@@ -49,8 +51,11 @@ const (
 const narratorComplianceTrailer = `## 引擎合规层（不可编辑）
 
 工具调用纪律：
-- ` + "`random`" + ` / ` + "`chance`" + ` / ` + "`weighted_choice`" + ` / ` + "`roll`" + ` 是内部随机性，
+- ` + "`random`" + ` / ` + "`chance`" + ` / ` + "`weighted_choice`" + ` 是内部随机性，
   用于不确定结果。**绝不**在叙述中暴露骰子、概率、数值或机制术语。
+- ` + "`advance_time`" + ` 用于声明本节推进了故事内时间（入夜、数日后、翻篇/换章），
+  让隐藏的世界线按正确节奏演进。这是**内部节奏信号**：调用它，但**绝不**把
+  推进的次数/数值写进面向玩家的叙述。
 - ` + "`update_state`" + ` 用于持久化关键状态变化（仅当实体已有可变状态时可用）。
 - ` + "`get_entity_state`" + ` 用于在叙述前查阅实体当下状态。
 - ` + "`lookup_rules`" + ` 用于回顾世界观规则；不要把"机制公式"念给玩家听。

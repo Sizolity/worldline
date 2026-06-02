@@ -60,7 +60,7 @@ type ProvenanceEntry struct {
 // the updated world and a report of what was inserted/skipped.
 //
 // CompileDraft is non-destructive on the caller's world value: the input
-// world's Entities map and Relations/Facts/Threads/Memory slices are detached
+// world's Entities map and Relations/Facts/Threads/Memories slices are detached
 // (shallow-copied) before any mutation, so a returned error never leaves the
 // caller's world in a half-mutated state. Callers may safely discard the
 // returned World on error.
@@ -245,7 +245,7 @@ func CompileDraft(world model.World, draft Draft, opts CompileOptions) (model.Wo
 
 	for _, dm := range draft.Memories {
 		mid := model.MemoryID(dm.ID)
-		existing, hasExisting := findMemory(world.Memory, mid)
+		existing, hasExisting := findMemory(world.Memories, mid)
 		if hasExisting && opts.ConflictPolicy != ConflictPolicyReplace {
 			report.Skipped++
 			continue
@@ -279,9 +279,9 @@ func CompileDraft(world model.World, draft Draft, opts CompileOptions) (model.Wo
 			continue
 		}
 		if hasExisting {
-			world.Memory = removeMemory(world.Memory, mid)
+			world.Memories = removeMemory(world.Memories, mid)
 		}
-		world.Memory = append(world.Memory, memory)
+		world.Memories = append(world.Memories, memory)
 		report.Inserted++
 		if len(dm.SourceRefs) > 0 {
 			report.Provenance = append(report.Provenance, ProvenanceEntry{
@@ -296,7 +296,7 @@ func CompileDraft(world model.World, draft Draft, opts CompileOptions) (model.Wo
 }
 
 // detachWorld returns a copy of world whose mutable reference fields
-// (Entities map and Relations/Facts/Threads/Memory slices) no longer alias
+// (Entities map and Relations/Facts/Threads/Memories slices) no longer alias
 // the caller's backing storage. Entity, Relation, Fact, WorldThread and
 // MemoryRecord values are themselves not deep-copied — CompileDraft never
 // mutates fields on existing values, only replaces whole records.
@@ -315,8 +315,8 @@ func detachWorld(world model.World) model.World {
 	if world.Threads != nil {
 		world.Threads = append([]model.WorldThread(nil), world.Threads...)
 	}
-	if world.Memory != nil {
-		world.Memory = append([]model.MemoryRecord(nil), world.Memory...)
+	if world.Memories != nil {
+		world.Memories = append([]model.MemoryRecord(nil), world.Memories...)
 	}
 	return world
 }

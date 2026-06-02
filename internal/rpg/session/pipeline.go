@@ -137,6 +137,13 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 	narrative := narrativeBuf.String()
 	effects := tc.GetPendingEffects()
 
+	// In-fiction time advance declared by the narrator via advance_time.
+	// The per-beat baseline is one scene; days/chapters come from explicit
+	// narrative skips. This delta both drives worldline drift below and is
+	// honestly reflected in the clock so projected world state reads right.
+	scenes, days, chapters := tc.GetPendingTimeAdvance()
+	delta := story.TimeDelta{Scenes: 1 + scenes, Days: days, Chapters: chapters}
+
 	// Synthesize a single per-beat event that captures BOTH the player's
 	// action and a summary of the narrator's response, plus any pending
 	// tool effects. This event is written unconditionally so that downstream
@@ -164,6 +171,25 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 	// pre-refactor behavior (one tick == one PL action).
 	world.Clock.Sequence++
 
+	// Diegetic-time advance: move the clock forward by the per-beat delta so
+	// the worldline scheduler (and any future calendar-aware system) sees the
+	// in-fiction time that actually elapsed. Scenes always advance the tick
+	// counter; declared day/chapter skips accumulate into the calendar map.
+	// This runs regardless of whether story is enabled — the clock should
+	// advance every beat; only the story.Tick below is gated on storyStore.
+	world.Clock.Current.Tick += int64(delta.Scenes)
+	if delta.Days > 0 || delta.Chapters > 0 {
+		if world.Clock.Current.Calendar == nil {
+			world.Clock.Current.Calendar = make(map[string]int)
+		}
+		if delta.Days > 0 {
+			world.Clock.Current.Calendar["day"] += delta.Days
+		}
+		if delta.Chapters > 0 {
+			world.Clock.Current.Calendar["chapter"] += delta.Chapters
+		}
+	}
+
 	// === WorldLine scheduler ===
 	// Runs after player tool-effects are applied and clock advances, so it
 	// sees the post-action world. Emitted events flow through the same
@@ -176,9 +202,9 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 		}
 		if len(lines) > 0 {
 			tickOut, err := story.Tick(story.TickInput{
-				World:     world,
-				Lines:     lines,
-				TimeScale: world.Clock.Current.Kind,
+				World: world,
+				Lines: lines,
+				Delta: delta,
 			}, s.rng)
 			if err != nil {
 				result.Err = fmt.Errorf("worldline tick: %w", err)

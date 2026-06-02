@@ -102,7 +102,7 @@ func TestDiffWorldsMemoriesAndEvents(t *testing.T) {
 
 	a := model.World{
 		ID: "a", Name: "A",
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1"}, {ID: "m2"},
 		},
 		EventLog: []model.WorldEvent{
@@ -111,7 +111,7 @@ func TestDiffWorldsMemoriesAndEvents(t *testing.T) {
 	}
 	b := model.World{
 		ID: "b", Name: "B",
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m2"}, {ID: "m3"},
 		},
 		EventLog: []model.WorldEvent{
@@ -276,13 +276,13 @@ func TestDiffWorldsMemoryChanges(t *testing.T) {
 
 	a := model.World{
 		ID: "a", Name: "A",
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Kind: "observation", Content: "saw fire", TruthStatus: "believed", Importance: 0.5},
 		},
 	}
 	b := model.World{
 		ID: "b", Name: "B",
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Kind: "observation", Content: "saw dragon fire", TruthStatus: "confirmed", Importance: 0.9},
 		},
 	}

@@ -37,12 +37,12 @@ func applyAddMemory(world model.World, effect model.Effect) (model.World, error)
 	if err := memory.Validate(); err != nil {
 		return model.World{}, err
 	}
-	world.Memory = append(world.Memory, memory)
+	world.Memories = append(world.Memories, memory)
 	return world, nil
 }
 
 func applyReviseMemory(world model.World, effect model.Effect) (model.World, error) {
-	for i, memory := range world.Memory {
+	for i, memory := range world.Memories {
 		if string(memory.ID) != effect.TargetID {
 			continue
 		}
@@ -64,14 +64,14 @@ func applyReviseMemory(world model.World, effect model.Effect) (model.World, err
 		if err := memory.Validate(); err != nil {
 			return model.World{}, err
 		}
-		world.Memory[i] = memory
+		world.Memories[i] = memory
 		return world, nil
 	}
 	return model.World{}, fmt.Errorf("memory %q not found", effect.TargetID)
 }
 
 func applyReconcileMemory(world model.World, effect model.Effect) (model.World, error) {
-	for i, memory := range world.Memory {
+	for i, memory := range world.Memories {
 		if string(memory.ID) != effect.TargetID {
 			continue
 		}
@@ -90,11 +90,11 @@ func applyReconcileMemory(world model.World, effect model.Effect) (model.World, 
 		if err := memory.Validate(); err != nil {
 			return model.World{}, err
 		}
-		world.Memory[i] = memory
+		world.Memories[i] = memory
 		if newMemory, ok, err := reconciliationMemoryFromPayload(effect, memory); err != nil {
 			return model.World{}, err
 		} else if ok {
-			world.Memory = append(world.Memory, newMemory)
+			world.Memories = append(world.Memories, newMemory)
 		}
 		return world, nil
 	}
@@ -102,9 +102,9 @@ func applyReconcileMemory(world model.World, effect model.Effect) (model.World, 
 }
 
 func applyRemoveMemory(world model.World, effect model.Effect) (model.World, error) {
-	for i, mem := range world.Memory {
+	for i, mem := range world.Memories {
 		if string(mem.ID) == effect.TargetID {
-			world.Memory = append(world.Memory[:i], world.Memory[i+1:]...)
+			world.Memories = append(world.Memories[:i], world.Memories[i+1:]...)
 			return world, nil
 		}
 	}

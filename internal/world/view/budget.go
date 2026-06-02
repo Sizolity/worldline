@@ -41,7 +41,7 @@ func EstimateBudget(w model.World) BudgetEstimate {
 	b.Entities = sectionBudget(len(w.Entities), w.Entities)
 	b.Facts = sectionBudget(len(w.Facts), w.Facts)
 	b.Relations = sectionBudget(len(w.Relations), w.Relations)
-	b.Memories = sectionBudget(len(w.Memory), w.Memory)
+	b.Memories = sectionBudget(len(w.Memories), w.Memories)
 	b.Threads = sectionBudget(len(w.Threads), w.Threads)
 	b.EventLog = sectionBudget(len(w.EventLog), w.EventLog)
 	b.EventQueue = sectionBudget(len(w.EventQueue), w.EventQueue)

@@ -9,8 +9,10 @@ import (
 )
 
 // Store persists []WorldLine per world. Files live at
-// <BaseDir>/<worldID>/worldlines.json, colocated with snapshot.json (FileStore)
-// and disclosure.json (fog.Store) so all world-scoped data shares one dir.
+// <BaseDir>/<worldID>/worldlines.json, colocated with the FileStore snapshot
+// (world.json plus the normalized entities/relations/facts/threads/memories
+// files) and disclosure.json (fog.Store) so all world-scoped data shares one
+// dir.
 type Store struct {
 	BaseDir string
 }

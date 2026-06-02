@@ -154,8 +154,8 @@ func buildEntityCounts(w worldmodel.World) EntityCounts {
 }
 
 func buildMemoryCounts(w worldmodel.World) MemoryCounts {
-	mc := MemoryCounts{Total: len(w.Memory)}
-	for _, m := range w.Memory {
+	mc := MemoryCounts{Total: len(w.Memories)}
+	for _, m := range w.Memories {
 		switch m.Owner.Kind {
 		case worldmodel.MemoryOwnerKindWorld:
 			mc.World++
@@ -173,7 +173,7 @@ func buildMemoryCounts(w worldmodel.World) MemoryCounts {
 // When n <= 0 the cap is disabled and all qualifying NPCs are returned.
 func TopNPCsByMemoryCount(w worldmodel.World, n int) []NPCMemoryStat {
 	counts := map[string]int{}
-	for _, m := range w.Memory {
+	for _, m := range w.Memories {
 		if m.Owner.Kind != worldmodel.MemoryOwnerKindCharacter {
 			continue
 		}

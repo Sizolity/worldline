@@ -13,12 +13,16 @@ func TestRegistryReturnsAllTools(t *testing.T) {
 		names[info.Name] = true
 	}
 	for _, required := range []string{
-		"lookup_rules", "update_state", "roll", "get_entity_state",
+		"lookup_rules", "update_state", "advance_time", "get_entity_state",
 		"explore_knowledge", "random", "chance", "weighted_choice",
 	} {
 		if !names[required] {
 			t.Errorf("missing tool %q", required)
 		}
+	}
+	// roll is intentionally shelved in v1 — it must NOT be registered.
+	if names["roll"] {
+		t.Errorf("roll should be shelved (not registered) in v1")
 	}
 }
 

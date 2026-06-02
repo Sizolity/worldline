@@ -23,7 +23,7 @@ func statsTestWorld() model.World {
 			{ID: "f1", SubjectID: "c1", Predicate: "age"},
 			{ID: "f2", SubjectID: "c2", Predicate: "alive"},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindWorld}, Content: "x"},
 			{ID: "m2", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "c1"}, Content: "y"},
 			{ID: "m3", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "c1"}, Content: "z"},

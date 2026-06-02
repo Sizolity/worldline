@@ -59,7 +59,7 @@ func TestLoadDirectorsBuildsScriptAndReconcileDirectors(t *testing.T) {
 	}
 
 	reconcileEvents, err := directors[1].Propose(Context{World: model.World{
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,

@@ -11,6 +11,7 @@ const (
 	descLookupRules      = "Look up active world-rule prose by category. Use to recall narrative constraints (causality, taboos, faction codes) before deciding what happens next. Not a mechanic / formula lookup."
 	descUpdateState      = "Persist a meaningful state transition on an entity (mood shifted, relationship changed, item acquired). Only exposed when entities already carry mutable state."
 	descRoll             = "Internal randomness: roll N M-sided dice for uncertain outcomes. The numeric result MUST NOT appear in the player-facing narration — translate it into qualitative description (\"barely\", \"narrowly\", \"with ease\") and stop there."
+	descAdvanceTime      = "Declare that in-fiction time advanced this beat (e.g. nightfall, days later, a new chapter). Internal pacing signal — the magnitude/number MUST NOT appear in the player-facing narration."
 	descGetEntityState   = "Read-only inspection of an entity's current state."
 	descExploreKnowledge = "Reveal a hidden entity or fact to make it available in future beats. Call when the player discovers something new through exploration, interaction, or study."
 	descRandom           = "Internal randomness: returns a float in [0,1). Use to drive subtle uncertainty (a tone, a rumor's accuracy). Result MUST NOT surface as a number in narration."
@@ -44,6 +45,11 @@ var (
 		"sides":    {Type: schema.Integer, Desc: "Number of sides (e.g. 20 for d20)", Required: true},
 		"count":    {Type: schema.Integer, Desc: "Number of dice (default 1)"},
 		"modifier": {Type: schema.Integer, Desc: "Flat modifier added to total (default 0)"},
+	})
+
+	advanceTimeSchema = schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"scale": {Type: schema.String, Desc: "Time scale that advanced: one of scene, day, chapter", Required: true},
+		"count": {Type: schema.Integer, Desc: "How many units of that scale elapsed (default 1)"},
 	})
 
 	getEntityStateSchema = schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{

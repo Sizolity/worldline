@@ -35,7 +35,7 @@ func richWorld() model.World {
 			{ID: "t1", Kind: model.ThreadKindMystery, Title: "Find the traitor", Status: model.ThreadStatusActive},
 			{ID: "t2", Kind: model.ThreadKindQuest, Title: "Old quest", Status: model.ThreadStatusResolved},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindWorld}, Content: "Peace was declared.", TruthStatus: model.TruthStatusTrue},
 			{ID: "m2", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "alice"}, Content: "Alice saw the shadow.", TruthStatus: model.TruthStatusUnknown},
 		},

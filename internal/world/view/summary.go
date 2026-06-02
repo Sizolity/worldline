@@ -26,7 +26,7 @@ func FormatWorldSummary(w model.World) string {
 	formatRelations(&b, w.Relations, w.Entities)
 	formatFacts(&b, w.Facts, w.Entities)
 	formatThreads(&b, w.Threads)
-	formatMemorySummary(&b, w.Memory)
+	formatMemorySummary(&b, w.Memories)
 	formatEventSummary(&b, w.EventLog)
 
 	if len(w.EventQueue) > 0 {

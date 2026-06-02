@@ -46,6 +46,11 @@ func (t *updateStateTool) InvokableRun(ctx context.Context, arguments string, _ 
 	return t.tc.UpdateState(ctx, &params)
 }
 
+// rollTool is intentionally SHELVED in v1: it is kept (along with Roll /
+// RollParams / rollSchema / descRoll) for a future dice/rule resolution
+// system, but it is NOT registered in Registry() nor disclosed by
+// NewInvokableTools / NewDisclosedTools because v1 has no rule system that
+// would consume a roll. To revive it, re-add it to those three sites.
 type rollTool struct{ tc *ToolContext }
 
 func (t *rollTool) Info(_ context.Context) (*schema.ToolInfo, error) {
@@ -58,6 +63,20 @@ func (t *rollTool) InvokableRun(ctx context.Context, arguments string, _ ...eino
 		return "", fmt.Errorf("parse arguments: %w", err)
 	}
 	return t.tc.Roll(ctx, &params)
+}
+
+type advanceTimeTool struct{ tc *ToolContext }
+
+func (t *advanceTimeTool) Info(_ context.Context) (*schema.ToolInfo, error) {
+	return &schema.ToolInfo{Name: "advance_time", Desc: descAdvanceTime, ParamsOneOf: advanceTimeSchema}, nil
+}
+
+func (t *advanceTimeTool) InvokableRun(ctx context.Context, arguments string, _ ...einotool.Option) (string, error) {
+	var params AdvanceTimeParams
+	if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+		return "", fmt.Errorf("parse arguments: %w", err)
+	}
+	return t.tc.AdvanceTime(ctx, &params)
 }
 
 type getEntityStateTool struct{ tc *ToolContext }
@@ -139,6 +158,7 @@ var (
 	_ einotool.InvokableTool = (*lookupRulesTool)(nil)
 	_ einotool.InvokableTool = (*updateStateTool)(nil)
 	_ einotool.InvokableTool = (*rollTool)(nil)
+	_ einotool.InvokableTool = (*advanceTimeTool)(nil)
 	_ einotool.InvokableTool = (*getEntityStateTool)(nil)
 	_ einotool.InvokableTool = (*exploreKnowledgeTool)(nil)
 	_ einotool.InvokableTool = (*randomTool)(nil)

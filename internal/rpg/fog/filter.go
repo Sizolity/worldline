@@ -12,7 +12,7 @@ import "github.com/sizolity/worldline/internal/world/model"
 //   - Facts: included only if explicitly visible in state.Facts
 //   - Relations: included only if both endpoints are >= Known AND relation is in state.Relations
 //   - Rules: always pass through (L0 bypass)
-//   - EventLog/Memory: always pass through (already happened = known)
+//   - EventLog/Memories: always pass through (already happened = known)
 //   - Threads: always pass through (narrative structure is meta-knowledge)
 func FilterWorld(w model.World, state DisclosureState) model.World {
 	out := w

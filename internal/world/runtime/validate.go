@@ -63,7 +63,7 @@ func DeepValidate(w model.World) ValidationReport {
 	checkDuplicateEntities(&report, w)
 	checkDuplicateSliceIDs(&report, "facts", factIDSlice(w.Facts))
 	checkDuplicateSliceIDs(&report, "relations", relationIDSlice(w.Relations))
-	checkDuplicateSliceIDs(&report, "memory", memoryIDSlice(w.Memory))
+	checkDuplicateSliceIDs(&report, "memory", memoryIDSlice(w.Memories))
 	checkDuplicateSliceIDs(&report, "event_log", eventIDSlice(w.EventLog))
 	checkDuplicateSliceIDs(&report, "threads", threadIDSlice(w.Threads))
 	checkDuplicateSliceIDs(&report, "rules", ruleIDSlice(w.Rules))
@@ -94,7 +94,7 @@ func DeepValidate(w model.World) ValidationReport {
 		}
 	}
 
-	for i, mem := range w.Memory {
+	for i, mem := range w.Memories {
 		path := fmt.Sprintf("memory[%d]", i)
 		if mem.Owner.Kind == model.MemoryOwnerKindCharacter && mem.Owner.ID != "" {
 			if !entitySet[model.EntityID(mem.Owner.ID)] {
@@ -180,7 +180,7 @@ func DeepValidate(w model.World) ValidationReport {
 		}
 	}
 
-	for i, mem := range w.Memory {
+	for i, mem := range w.Memories {
 		if err := mem.Validate(); err != nil {
 			report.Issues = append(report.Issues, ValidationIssue{
 				Severity: ValidationError,

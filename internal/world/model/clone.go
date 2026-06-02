@@ -78,7 +78,7 @@ func (w World) Clone() World {
 	w.Threads = slices.Clone(w.Threads)
 	w.EventLog = CloneEvents(w.EventLog)
 	w.EventQueue = CloneEventQueue(w.EventQueue)
-	w.Memory = CloneMemories(w.Memory)
+	w.Memories = CloneMemories(w.Memories)
 	w.Metadata = w.Metadata.Clone()
 	return w
 }

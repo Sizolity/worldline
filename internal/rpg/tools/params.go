@@ -17,6 +17,13 @@ type RollParams struct {
 	Modifier int `json:"modifier,omitempty"`
 }
 
+// AdvanceTimeParams declares an in-fiction time skip for the current beat.
+// Scale is one of "scene" | "day" | "chapter"; Count defaults to 1 when < 1.
+type AdvanceTimeParams struct {
+	Scale string `json:"scale"`
+	Count int    `json:"count,omitempty"`
+}
+
 type GetEntityStateParams struct {
 	EntityID string `json:"entity_id"`
 }

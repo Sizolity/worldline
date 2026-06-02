@@ -33,7 +33,7 @@ func TestEstimateBudgetCounts(t *testing.T) {
 		Facts: []model.Fact{
 			{ID: "f1", SubjectID: "e1", Predicate: "age", Value: model.Value{Raw: 25}},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Content: "saw fire"},
 			{ID: "m2", Content: "heard scream"},
 		},

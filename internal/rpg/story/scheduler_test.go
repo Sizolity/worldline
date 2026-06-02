@@ -48,7 +48,7 @@ func TestTick_DriftAdvancesTension(t *testing.T) {
 		{ID: "wl_seal", ThreadID: "th_seal", Visibility: VisibilityHinted,
 			Drift: Drift{Scene: 0.10}},
 	}
-	out, err := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, err := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if err != nil {
 		t.Fatalf("Tick: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestTick_DriftClampsAtOne(t *testing.T) {
 	lines := []WorldLine{
 		{ID: "wl", ThreadID: "th_seal", Drift: Drift{Scene: 0.50}},
 	}
-	out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, _ := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if got := out.Events[0].Effects[0].Payload["tension"].Raw.(float64); got != 1.0 {
 		t.Errorf("expected tension clamped at 1.0, got %v", got)
 	}
@@ -86,7 +86,7 @@ func TestTick_DriftClampsAtZero(t *testing.T) {
 	lines := []WorldLine{
 		{ID: "wl", ThreadID: "th_seal", Drift: Drift{Scene: -0.50}},
 	}
-	out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, _ := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if got := out.Events[0].Effects[0].Payload["tension"].Raw.(float64); got != 0.0 {
 		t.Errorf("expected tension clamped at 0.0, got %v", got)
 	}
@@ -98,39 +98,64 @@ func TestTick_NoDriftAtSaturation(t *testing.T) {
 	lines := []WorldLine{
 		{ID: "wl", ThreadID: "th_seal", Drift: Drift{Scene: 0.10}},
 	}
-	out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, _ := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if len(out.Events) != 0 {
 		t.Errorf("expected 0 events at saturation, got %d", len(out.Events))
 	}
 }
 
-func TestTick_TimeScaleSelection(t *testing.T) {
+// TestTick_TimeDeltaPerScale isolates one drift scale at a time by feeding a
+// TimeDelta that elapses only that scale. It pins the per-scale weighting
+// (scene/day/chapter) and confirms that a zero delta produces no drift.
+func TestTick_TimeDeltaPerScale(t *testing.T) {
 	tests := []struct {
-		scale   model.WorldTimeKind
+		name    string
+		delta   TimeDelta
 		drift   Drift
 		wantTen float64
 	}{
-		{model.WorldTimeScene, Drift{Scene: 0.02, Day: 0.15}, 0.32},
-		{model.WorldTimeDay, Drift{Scene: 0.02, Day: 0.15}, 0.45},
-		{model.WorldTimeChapter, Drift{Chapter: 0.35}, 0.65},
-		{model.WorldTimeTurn, Drift{Scene: 0.99}, 0.30}, // unknown scale → no drift → no event
+		{"scene", TimeDelta{Scenes: 1}, Drift{Scene: 0.02, Day: 0.15}, 0.32},
+		{"day", TimeDelta{Days: 1}, Drift{Scene: 0.02, Day: 0.15}, 0.45},
+		{"chapter", TimeDelta{Chapters: 1}, Drift{Chapter: 0.35}, 0.65},
+		{"none", TimeDelta{}, Drift{Scene: 0.99}, 0.30}, // no time elapsed → no drift → no event
 	}
 	for _, tt := range tests {
-		t.Run(string(tt.scale), func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			world := sampleWorld(0.30)
 			lines := []WorldLine{{ID: "wl", ThreadID: "th_seal", Drift: tt.drift}}
-			out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: tt.scale}, newRNG())
+			out, _ := Tick(TickInput{World: world, Lines: lines, Delta: tt.delta}, newRNG())
 			if tt.wantTen == 0.30 {
 				if len(out.Events) != 0 {
-					t.Errorf("expected no event for unknown scale, got %d", len(out.Events))
+					t.Errorf("expected no event when no time elapsed, got %d", len(out.Events))
 				}
 				return
 			}
 			got := out.Events[0].Effects[0].Payload["tension"].Raw.(float64)
 			if !approxEqual(got, tt.wantTen) {
-				t.Errorf("scale %s: want %v, got %v", tt.scale, tt.wantTen, got)
+				t.Errorf("delta %+v: want %v, got %v", tt.delta, tt.wantTen, got)
 			}
 		})
+	}
+}
+
+// TestTick_TimeDeltaSummation proves all three drift scales are now live
+// simultaneously: a beat that advances one scene and two days accrues
+// scene drift + 2× day drift in a single tick.
+func TestTick_TimeDeltaSummation(t *testing.T) {
+	world := sampleWorld(0.0)
+	lines := []WorldLine{
+		{ID: "wl", ThreadID: "th_seal", Drift: Drift{Scene: 0.05, Day: 0.20}},
+	}
+	out, err := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1, Days: 2}}, newRNG())
+	if err != nil {
+		t.Fatalf("Tick: %v", err)
+	}
+	if len(out.Events) != 1 {
+		t.Fatalf("expected 1 drift event, got %d", len(out.Events))
+	}
+	// 0.05*1 + 0.20*2 = 0.45.
+	if got := out.Events[0].Effects[0].Payload["tension"].Raw.(float64); !approxEqual(got, 0.45) {
+		t.Errorf("expected summed tension 0.45, got %v", got)
 	}
 }
 
@@ -139,7 +164,7 @@ func TestTick_ResolvedLineNotAdvanced(t *testing.T) {
 	lines := []WorldLine{
 		{ID: "wl", ThreadID: "th_seal", Visibility: VisibilityResolved, Drift: Drift{Scene: 0.50}},
 	}
-	out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, _ := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if len(out.Events) != 0 {
 		t.Errorf("resolved line should not emit events, got %d", len(out.Events))
 	}
@@ -165,7 +190,7 @@ func TestTick_MilestoneFires_OnThreadTension(t *testing.T) {
 			},
 		}},
 	}}
-	out, err := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, err := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if err != nil {
 		t.Fatalf("Tick: %v", err)
 	}
@@ -196,7 +221,7 @@ func TestTick_MilestoneFiresOnce(t *testing.T) {
 			},
 		}},
 	}}
-	out, _ := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, _ := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if len(out.Events) != 0 {
 		t.Errorf("already-triggered milestone must not refire, got %d events", len(out.Events))
 	}
@@ -265,8 +290,8 @@ func TestTick_Condition_MissingArg(t *testing.T) {
 
 func TestTick_EmptyInputs(t *testing.T) {
 	out, err := Tick(TickInput{
-		World:     sampleWorld(0.30),
-		TimeScale: model.WorldTimeScene,
+		World: sampleWorld(0.30),
+		Delta: TimeDelta{Scenes: 1},
 	}, newRNG())
 	if err != nil {
 		t.Fatalf("Tick empty: %v", err)
@@ -281,7 +306,7 @@ func TestTick_MissingThreadIsNoOp(t *testing.T) {
 	lines := []WorldLine{
 		{ID: "wl", ThreadID: "th_does_not_exist", Drift: Drift{Scene: 0.10}},
 	}
-	out, err := Tick(TickInput{World: world, Lines: lines, TimeScale: model.WorldTimeScene}, newRNG())
+	out, err := Tick(TickInput{World: world, Lines: lines, Delta: TimeDelta{Scenes: 1}}, newRNG())
 	if err != nil {
 		t.Fatalf("Tick: %v", err)
 	}

@@ -106,29 +106,31 @@ func TestCompileWorldlines_TickBehavior(t *testing.T) {
 	}
 
 	// Drift: the 渐磨 tempo must yield {scene:0.05, day:0.20, chapter:0.40}.
+	// Each case isolates one scale via a TimeDelta that elapses only it.
 	for _, tc := range []struct {
-		scale worldmodel.WorldTimeKind
+		name  string
+		delta story.TimeDelta
 		want  float64
 	}{
-		{worldmodel.WorldTimeScene, 0.05},
-		{worldmodel.WorldTimeDay, 0.20},
-		{worldmodel.WorldTimeChapter, 0.40},
+		{"scene", story.TimeDelta{Scenes: 1}, 0.05},
+		{"day", story.TimeDelta{Days: 1}, 0.20},
+		{"chapter", story.TimeDelta{Chapters: 1}, 0.40},
 	} {
 		world := worldWithThreadTension("thread-2", 0.0)
-		out, err := story.Tick(story.TickInput{World: world, Lines: lines, TimeScale: tc.scale}, rng())
+		out, err := story.Tick(story.TickInput{World: world, Lines: lines, Delta: tc.delta}, rng())
 		if err != nil {
-			t.Fatalf("Tick(%s): %v", tc.scale, err)
+			t.Fatalf("Tick(%s): %v", tc.name, err)
 		}
 		tension := driftedTension(out.Events, "thread-2")
 		if !almostEqual(tension, tc.want) {
-			t.Errorf("%s drift → tension %.3f, want %.3f", tc.scale, tension, tc.want)
+			t.Errorf("%s drift → tension %.3f, want %.3f", tc.name, tension, tc.want)
 		}
 	}
 
 	// Milestones: starting tension 0.60 + one scene of drift crosses both
 	// the 初现(0.30) and 决裂(0.60) bands, so m1 then m2 fire in one tick.
 	world := worldWithThreadTension("thread-2", 0.60)
-	out, err := story.Tick(story.TickInput{World: world, Lines: lines, TimeScale: worldmodel.WorldTimeScene}, rng())
+	out, err := story.Tick(story.TickInput{World: world, Lines: lines, Delta: story.TimeDelta{Scenes: 1}}, rng())
 	if err != nil {
 		t.Fatalf("Tick: %v", err)
 	}

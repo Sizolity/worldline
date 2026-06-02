@@ -277,7 +277,7 @@ func TestSystemPrompt_IncludesNPCMemorySection(t *testing.T) {
 				ID: "npc-monk", Type: "character", Name: "老僧",
 			},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID:         "mem-monk-1",
 				Owner:      model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "npc-monk"},

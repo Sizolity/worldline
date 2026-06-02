@@ -19,7 +19,7 @@ func baseWorld() model.World {
 			{ID: "t2", Kind: model.ThreadKindMystery, Title: "Mystery", Status: model.ThreadStatusOpen},
 		},
 		Facts:    []model.Fact{{ID: "f1"}},
-		Memory:   []model.MemoryRecord{{ID: "m1"}},
+		Memories: []model.MemoryRecord{{ID: "m1"}},
 		EventLog: []model.WorldEvent{{ID: "ev1", Type: model.EventTypeNote, Source: model.EventSourceDirector}},
 	}
 }
@@ -31,7 +31,7 @@ func TestMergeWorldsNoConflict(t *testing.T) {
 	source := baseWorld()
 	source.ID = "source"
 	source.Entities["e3"] = model.Entity{ID: "e3", Type: "location", Name: "Market"}
-	source.Memory = append(source.Memory, model.MemoryRecord{ID: "m2"})
+	source.Memories = append(source.Memories, model.MemoryRecord{ID: "m2"})
 	source.Clock.Sequence = 8
 
 	target := baseWorld()

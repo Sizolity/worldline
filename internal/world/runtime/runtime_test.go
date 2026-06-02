@@ -272,14 +272,14 @@ func TestRuntimeAppliesAddMemoryEffect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApplyEvent returned error: %v", err)
 	}
-	if len(got.Memory) != 1 {
-		t.Fatalf("Memory length = %d, want 1", len(got.Memory))
+	if len(got.Memories) != 1 {
+		t.Fatalf("Memory length = %d, want 1", len(got.Memories))
 	}
-	if got.Memory[0].Owner.Kind != model.MemoryOwnerKindCharacter || got.Memory[0].Owner.ID != "char_b" {
-		t.Fatalf("unexpected memory owner: %#v", got.Memory[0].Owner)
+	if got.Memories[0].Owner.Kind != model.MemoryOwnerKindCharacter || got.Memories[0].Owner.ID != "char_b" {
+		t.Fatalf("unexpected memory owner: %#v", got.Memories[0].Owner)
 	}
-	if got.Memory[0].Confidence != 0.8 {
-		t.Fatalf("unexpected confidence: %#v", got.Memory[0])
+	if got.Memories[0].Confidence != 0.8 {
+		t.Fatalf("unexpected confidence: %#v", got.Memories[0])
 	}
 }
 
@@ -288,7 +288,7 @@ func TestRuntimeAppliesReviseMemoryEffect(t *testing.T) {
 	world := model.World{
 		ID:   "test_world",
 		Name: "Test World",
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,
@@ -318,11 +318,11 @@ func TestRuntimeAppliesReviseMemoryEffect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApplyEvent returned error: %v", err)
 	}
-	if got.Memory[0].Content != "A may have been framed." {
-		t.Fatalf("content not revised: %#v", got.Memory[0])
+	if got.Memories[0].Content != "A may have been framed." {
+		t.Fatalf("content not revised: %#v", got.Memories[0])
 	}
-	if got.Memory[0].TruthStatus != model.TruthStatusDisputed || got.Memory[0].Confidence != 0.4 {
-		t.Fatalf("memory not revised: %#v", got.Memory[0])
+	if got.Memories[0].TruthStatus != model.TruthStatusDisputed || got.Memories[0].Confidence != 0.4 {
+		t.Fatalf("memory not revised: %#v", got.Memories[0])
 	}
 }
 
@@ -354,7 +354,7 @@ func TestRuntimeAppliesReconcileMemoryEffect(t *testing.T) {
 	world := model.World{
 		ID:   "test_world",
 		Name: "Test World",
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,
@@ -389,26 +389,26 @@ func TestRuntimeAppliesReconcileMemoryEffect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApplyEvent returned error: %v", err)
 	}
-	if len(got.Memory) != 2 {
-		t.Fatalf("Memory length = %d, want 2: %#v", len(got.Memory), got.Memory)
+	if len(got.Memories) != 2 {
+		t.Fatalf("Memory length = %d, want 2: %#v", len(got.Memories), got.Memories)
 	}
-	if got.Memory[0].TruthStatus != model.TruthStatusDisputed {
-		t.Fatalf("truth status not reconciled: %#v", got.Memory[0])
+	if got.Memories[0].TruthStatus != model.TruthStatusDisputed {
+		t.Fatalf("truth status not reconciled: %#v", got.Memories[0])
 	}
-	if math.Abs(got.Memory[0].Confidence-0.3) > 0.000001 {
-		t.Fatalf("confidence = %v, want 0.3: %#v", got.Memory[0].Confidence, got.Memory[0])
+	if math.Abs(got.Memories[0].Confidence-0.3) > 0.000001 {
+		t.Fatalf("confidence = %v, want 0.3: %#v", got.Memories[0].Confidence, got.Memories[0])
 	}
-	if got.Memory[0].Summary != "New evidence disputes C's old belief." {
-		t.Fatalf("summary not updated: %#v", got.Memory[0])
+	if got.Memories[0].Summary != "New evidence disputes C's old belief." {
+		t.Fatalf("summary not updated: %#v", got.Memories[0])
 	}
-	if got.Memory[1].ID != "memory_2" || got.Memory[1].Owner.ID != "char_c" {
-		t.Fatalf("reconciliation memory owner mismatch: %#v", got.Memory[1])
+	if got.Memories[1].ID != "memory_2" || got.Memories[1].Owner.ID != "char_c" {
+		t.Fatalf("reconciliation memory owner mismatch: %#v", got.Memories[1])
 	}
-	if got.Memory[1].Content != "C starts to suspect A was framed." {
-		t.Fatalf("reconciliation memory content mismatch: %#v", got.Memory[1])
+	if got.Memories[1].Content != "C starts to suspect A was framed." {
+		t.Fatalf("reconciliation memory content mismatch: %#v", got.Memories[1])
 	}
-	if got.Memory[1].TruthStatus != model.TruthStatusUnknown || got.Memory[1].Confidence != 0.5 {
-		t.Fatalf("unexpected reconciliation memory defaults: %#v", got.Memory[1])
+	if got.Memories[1].TruthStatus != model.TruthStatusUnknown || got.Memories[1].Confidence != 0.5 {
+		t.Fatalf("unexpected reconciliation memory defaults: %#v", got.Memories[1])
 	}
 }
 
@@ -419,7 +419,7 @@ func TestRuntimeReconcileMemoryClampsConfidence(t *testing.T) {
 	world := model.World{
 		ID:   "test_world",
 		Name: "Test World",
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,
@@ -445,8 +445,8 @@ func TestRuntimeReconcileMemoryClampsConfidence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("low confidence ApplyEvent returned error: %v", err)
 	}
-	if low.Memory[0].Confidence != 0 {
-		t.Fatalf("low confidence = %v, want 0", low.Memory[0].Confidence)
+	if low.Memories[0].Confidence != 0 {
+		t.Fatalf("low confidence = %v, want 0", low.Memories[0].Confidence)
 	}
 
 	high, err := rt.ApplyEvent(world, model.WorldEvent{
@@ -464,8 +464,8 @@ func TestRuntimeReconcileMemoryClampsConfidence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("high confidence ApplyEvent returned error: %v", err)
 	}
-	if high.Memory[0].Confidence != 1 {
-		t.Fatalf("high confidence = %v, want 1", high.Memory[0].Confidence)
+	if high.Memories[0].Confidence != 1 {
+		t.Fatalf("high confidence = %v, want 1", high.Memories[0].Confidence)
 	}
 }
 
@@ -832,7 +832,7 @@ func TestRuntimeAppliesRemoveMemoryEffect(t *testing.T) {
 	world := model.World{
 		ID:   "test_world",
 		Name: "Test World",
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "memory_1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindWorld}, Content: "The king is dead.", TruthStatus: model.TruthStatusTrue},
 			{ID: "memory_2", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"}, Content: "I saw a shadow.", TruthStatus: model.TruthStatusUnknown},
 		},
@@ -851,8 +851,8 @@ func TestRuntimeAppliesRemoveMemoryEffect(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ApplyEvent returned error: %v", err)
 	}
-	if len(got.Memory) != 1 || got.Memory[0].ID != "memory_2" {
-		t.Fatalf("Memory = %#v, want only memory_2", got.Memory)
+	if len(got.Memories) != 1 || got.Memories[0].ID != "memory_2" {
+		t.Fatalf("Memory = %#v, want only memory_2", got.Memories)
 	}
 }
 

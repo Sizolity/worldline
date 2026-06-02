@@ -300,9 +300,9 @@ func TestCompileDraftPopulatesMemorySubjectsAndEvents(t *testing.T) {
 	result, report, err := CompileDraft(world, draft, CompileOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 0, report.Rejected, "should not be rejected")
-	require.Len(t, result.Memory, 1)
-	assert.Equal(t, []model.EntityID{"char_a"}, result.Memory[0].SubjectIDs)
-	assert.Equal(t, []model.EventID{"evt_1"}, result.Memory[0].EventIDs)
+	require.Len(t, result.Memories, 1)
+	assert.Equal(t, []model.EntityID{"char_a"}, result.Memories[0].SubjectIDs)
+	assert.Equal(t, []model.EventID{"evt_1"}, result.Memories[0].EventIDs)
 }
 
 func TestCompileDraftReplaceUnionsThreadParticipantsAndMemorySubjects(t *testing.T) {
@@ -313,7 +313,7 @@ func TestCompileDraftReplaceUnionsThreadParticipantsAndMemorySubjects(t *testing
 		ID: "th_1", Kind: "quest", Title: "Q", Status: "open",
 		ParticipantIDs: []model.EntityID{"char_a"},
 		LocationID:     "loc_x",
-	}}, Memory: []model.MemoryRecord{{
+	}}, Memories: []model.MemoryRecord{{
 		ID: "mem_1", Owner: model.MemoryOwner{Kind: "character", ID: "char_a"},
 		Content:    "history",
 		SubjectIDs: []model.EntityID{"char_a"},
@@ -336,9 +336,9 @@ func TestCompileDraftReplaceUnionsThreadParticipantsAndMemorySubjects(t *testing
 		"replace must union participants, not replace them")
 	assert.Equal(t, model.EntityID("loc_x"), result.Threads[0].LocationID,
 		"empty LocationID in draft must preserve existing")
-	require.Len(t, result.Memory, 1)
-	assert.ElementsMatch(t, []model.EntityID{"char_a", "char_b"}, result.Memory[0].SubjectIDs)
-	assert.ElementsMatch(t, []model.EventID{"evt_1", "evt_2"}, result.Memory[0].EventIDs)
+	require.Len(t, result.Memories, 1)
+	assert.ElementsMatch(t, []model.EntityID{"char_a", "char_b"}, result.Memories[0].SubjectIDs)
+	assert.ElementsMatch(t, []model.EventID{"evt_1", "evt_2"}, result.Memories[0].EventIDs)
 }
 
 func TestValidateDraftRejectsMalformedThreadAndMemoryIDs(t *testing.T) {
@@ -736,7 +736,7 @@ func TestCompileDraftRejectsInvalidMemoryOwner(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, report.Rejected)
 	assert.Equal(t, 1, report.Inserted)
-	require.Len(t, result.Memory, 1)
+	require.Len(t, result.Memories, 1)
 }
 
 func TestCompileDraftCanonDedupOnRepeat(t *testing.T) {
@@ -997,7 +997,7 @@ func TestReplacePreservesMemoryRuntimeFields(t *testing.T) {
 		ID:       "w",
 		Name:     "W",
 		Entities: map[model.EntityID]model.Entity{},
-		Memory:   []model.MemoryRecord{existing},
+		Memories: []model.MemoryRecord{existing},
 	}
 	draft := Draft{
 		Memories: []DraftMemory{
@@ -1006,8 +1006,8 @@ func TestReplacePreservesMemoryRuntimeFields(t *testing.T) {
 	}
 	result, _, err := CompileDraft(world, draft, CompileOptions{ConflictPolicy: ConflictPolicyReplace})
 	require.NoError(t, err)
-	require.Len(t, result.Memory, 1)
-	got := result.Memory[0]
+	require.Len(t, result.Memories, 1)
+	got := result.Memories[0]
 	assert.Equal(t, "new content", got.Content)
 	assert.Equal(t, []model.EntityID{"char_a"}, got.SubjectIDs, "subject_ids preserved")
 	assert.Equal(t, []model.EventID{"ev_1"}, got.EventIDs, "event_ids preserved")

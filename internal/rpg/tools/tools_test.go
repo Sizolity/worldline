@@ -188,6 +188,7 @@ func TestNewInvokableTools(t *testing.T) {
 		t.Fatalf("expected %d tools, got %d", wantCount, len(invokableTools))
 	}
 	ctx := context.Background()
+	names := map[string]bool{}
 	for _, tl := range invokableTools {
 		info, err := tl.Info(ctx)
 		if err != nil {
@@ -196,6 +197,13 @@ func TestNewInvokableTools(t *testing.T) {
 		if info.Name == "" {
 			t.Error("tool name should not be empty")
 		}
+		names[info.Name] = true
+	}
+	if !names["advance_time"] {
+		t.Error("expected advance_time in invokable set")
+	}
+	if names["roll"] {
+		t.Error("roll should be shelved (not invokable) in v1")
 	}
 }
 
@@ -299,15 +307,57 @@ func TestNewDisclosedTools_NoStateNoFog(t *testing.T) {
 		}
 		names[info.Name] = true
 	}
-	for _, want := range []string{"get_entity_state", "roll", "random", "chance", "weighted_choice", "lookup_rules"} {
+	for _, want := range []string{"get_entity_state", "advance_time", "random", "chance", "weighted_choice", "lookup_rules"} {
 		if !names[want] {
 			t.Errorf("expected %q in disclosed set, got %v", want, names)
 		}
 	}
-	for _, forbidden := range []string{"update_state", "explore_knowledge"} {
+	for _, forbidden := range []string{"update_state", "explore_knowledge", "roll"} {
 		if names[forbidden] {
 			t.Errorf("%q must NOT be disclosed when stateless+nofog, got %v", forbidden, names)
 		}
+	}
+}
+
+func TestAdvanceTime_Accumulates(t *testing.T) {
+	tc := &ToolContext{World: testWorld()}
+	ctx := context.Background()
+
+	// Mixed scales, including a repeat scale and a defaulted count.
+	calls := []AdvanceTimeParams{
+		{Scale: "scene"},         // count defaults to 1
+		{Scale: "day", Count: 3}, // explicit
+		{Scale: "day", Count: 2}, // accumulates onto day
+		{Scale: "chapter", Count: 1},
+	}
+	for _, c := range calls {
+		out, err := tc.AdvanceTime(ctx, &c)
+		if err != nil {
+			t.Fatalf("AdvanceTime(%+v): %v", c, err)
+		}
+		var parsed map[string]any
+		if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+			t.Fatalf("non-json output %q: %v", out, err)
+		}
+		if parsed["ok"] != true {
+			t.Errorf("expected ok=true, got %v", parsed["ok"])
+		}
+	}
+
+	scenes, days, chapters := tc.GetPendingTimeAdvance()
+	if scenes != 1 || days != 5 || chapters != 1 {
+		t.Errorf("GetPendingTimeAdvance = (%d,%d,%d), want (1,5,1)", scenes, days, chapters)
+	}
+}
+
+func TestAdvanceTime_UnknownScale(t *testing.T) {
+	tc := &ToolContext{World: testWorld()}
+	if _, err := tc.AdvanceTime(context.Background(), &AdvanceTimeParams{Scale: "eon"}); err == nil {
+		t.Fatal("expected error for unknown scale")
+	}
+	// A rejected call must not have mutated the accumulator.
+	if s, d, c := tc.GetPendingTimeAdvance(); s != 0 || d != 0 || c != 0 {
+		t.Errorf("rejected call mutated accumulator: (%d,%d,%d)", s, d, c)
 	}
 }
 

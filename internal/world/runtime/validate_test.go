@@ -21,7 +21,7 @@ func cleanWorld() model.World {
 		Facts: []model.Fact{
 			{ID: "f1", SubjectID: "char_a", Predicate: "alive", Value: model.Value{Kind: model.ValueKindBoolean, Raw: true}},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID: "m1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_a"},
 				Content: "I saw something.", SubjectIDs: []model.EntityID{"char_b"},
@@ -83,7 +83,7 @@ func TestDeepValidateFactBrokenRef(t *testing.T) {
 func TestDeepValidateMemoryOwnerBrokenRef(t *testing.T) {
 	t.Parallel()
 	w := cleanWorld()
-	w.Memory = append(w.Memory, model.MemoryRecord{
+	w.Memories = append(w.Memories, model.MemoryRecord{
 		ID: "m_bad", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "ghost"},
 		Content: "x",
 	})
@@ -102,7 +102,7 @@ func TestDeepValidateMemoryOwnerBrokenRef(t *testing.T) {
 func TestDeepValidateMemorySubjectWarning(t *testing.T) {
 	t.Parallel()
 	w := cleanWorld()
-	w.Memory[0].SubjectIDs = []model.EntityID{"nonexistent"}
+	w.Memories[0].SubjectIDs = []model.EntityID{"nonexistent"}
 	report := DeepValidate(w)
 	found := false
 	for _, issue := range report.Issues {
@@ -225,7 +225,7 @@ func TestDeepValidateThreadValidation(t *testing.T) {
 func TestDeepValidateMemoryValidation(t *testing.T) {
 	t.Parallel()
 	w := cleanWorld()
-	w.Memory = append(w.Memory, model.MemoryRecord{
+	w.Memories = append(w.Memories, model.MemoryRecord{
 		ID: "m_bad", Owner: model.MemoryOwner{Kind: "invalid_owner"},
 	})
 	report := DeepValidate(w)

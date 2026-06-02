@@ -47,7 +47,7 @@ func (v NarrativeView) Render(w model.World, req NarrativeContextRequest) Narrat
 		RecentEvents:   recentEvents(w.EventLog, req.RecentEventLimit),
 		ActiveThreads:  ActiveThreads(w.Threads),
 		Facts:          factsNonNil(w.Facts),
-		PublicMemories: publicWorldMemories(w.Memory),
+		PublicMemories: publicWorldMemories(w.Memories),
 	}
 }
 

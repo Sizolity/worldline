@@ -20,7 +20,7 @@ func archiveTestWorld() model.World {
 		Facts: []model.Fact{
 			{ID: "f1", SubjectID: "char_a", Predicate: "alive", Value: model.Value{Kind: model.ValueKindBoolean, Raw: true}},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindWorld}, Content: "hello"},
 		},
 		EventLog: []model.WorldEvent{
@@ -65,8 +65,8 @@ func TestExportImportRoundTrip(t *testing.T) {
 	if len(got.EventLog) != 1 {
 		t.Errorf("events = %d", len(got.EventLog))
 	}
-	if len(got.Memory) != 1 {
-		t.Errorf("memories = %d", len(got.Memory))
+	if len(got.Memories) != 1 {
+		t.Errorf("memories = %d", len(got.Memories))
 	}
 	if len(got.Threads) != 1 {
 		t.Errorf("threads = %d", len(got.Threads))

@@ -32,7 +32,7 @@ func (d ReconcileDirector) ID() string {
 func (d ReconcileDirector) Propose(ctx Context) ([]model.WorldEvent, error) {
 	events := make([]model.WorldEvent, 0, len(d.cases))
 	for _, c := range d.cases {
-		memory, ok := memoryByID(ctx.World.Memory, c.TargetMemoryID)
+		memory, ok := memoryByID(ctx.World.Memories, c.TargetMemoryID)
 		if !ok {
 			continue
 		}

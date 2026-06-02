@@ -67,7 +67,7 @@ func (v WorldDebugView) Render(w model.World) WorldDebugContext {
 		Entities:   entities,
 		Facts:      factsNonNil(w.Facts),
 		Relations:  nonNilClone(w.Relations),
-		Memories:   memoriesNonNil(w.Memory),
+		Memories:   memoriesNonNil(w.Memories),
 		Threads:    nonNilClone(w.Threads),
 		Rules:      nonNilClone(w.Rules),
 		EventLog:   eventsNonNil(w.EventLog),

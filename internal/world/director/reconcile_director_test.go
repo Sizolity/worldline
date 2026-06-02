@@ -168,7 +168,7 @@ func reconcileWorld() model.World {
 	return model.World{
 		ID:   "world_1",
 		Name: "World",
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "char_c"},
 			Scope:       model.MemoryScopeSubjective,

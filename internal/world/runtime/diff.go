@@ -88,7 +88,7 @@ func DiffWorlds(a, b model.World) WorldDiff {
 	d.Entities = diffEntities(a.Entities, b.Entities)
 	d.Facts = diffFacts(a.Facts, b.Facts)
 	d.Relations = diffRelations(a.Relations, b.Relations)
-	d.Memories = diffMemories(a.Memory, b.Memory)
+	d.Memories = diffMemories(a.Memories, b.Memories)
 	d.Threads = diffThreads(a.Threads, b.Threads)
 	d.Events = diffByID(eventIDs(a.EventLog), eventIDs(b.EventLog))
 	d.Rules = diffByID(ruleIDs(a.Rules), ruleIDs(b.Rules))

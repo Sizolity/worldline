@@ -43,6 +43,15 @@ func (s *FileStore) LoadWorld(_ context.Context, worldID string) (model.World, e
 	return world, nil
 }
 
+// SaveSnapshot persists the whole world as a normalized file set. It is a
+// deliberate full rewrite every call: the entities/ directory is cleared and
+// repopulated and events.jsonl is rewritten in full, which keeps the store
+// stateless (no dirty tracking) and every write atomic via temp-file rename.
+// Cost is O(entities + events) per save; acceptable at the expected
+// single-player smoke-test scale. Incremental persistence (append-only events,
+// per-entity dirty writes) is intentionally deferred until a long-running game
+// makes the rewrite a measured hot path.
+// TODO: incrementally persist events.jsonl
 func (s *FileStore) SaveSnapshot(ctx context.Context, world model.World) error {
 	if err := validateSnapshot(world); err != nil {
 		return err
@@ -68,7 +77,7 @@ func (s *FileStore) SaveSnapshot(ctx context.Context, world model.World) error {
 	if err := writeJSONL(filepath.Join(s.worldDir(worldID), "events.jsonl"), world.EventLog); err != nil {
 		return err
 	}
-	if err := s.SaveMemories(ctx, worldID, world.Memory); err != nil {
+	if err := s.SaveMemories(ctx, worldID, world.Memories); err != nil {
 		return err
 	}
 	return s.SaveThreads(ctx, worldID, world.Threads)
@@ -103,7 +112,7 @@ func validateSnapshot(world model.World) error {
 			return fmt.Errorf("event_queue[%d]: %w", i, err)
 		}
 	}
-	for i, memory := range world.Memory {
+	for i, memory := range world.Memories {
 		if err := memory.Validate(); err != nil {
 			return fmt.Errorf("memories[%d]: %w", i, err)
 		}
@@ -135,7 +144,7 @@ func (s *FileStore) LoadSnapshot(ctx context.Context, worldID string) (model.Wor
 	if world.EventLog, err = s.ListEvents(ctx, worldID); err != nil {
 		return model.World{}, err
 	}
-	if world.Memory, err = loadOptionalJSON[[]model.MemoryRecord](filepath.Join(s.worldDir(worldID), "memories.json")); err != nil {
+	if world.Memories, err = loadOptionalJSON[[]model.MemoryRecord](filepath.Join(s.worldDir(worldID), "memories.json")); err != nil {
 		return model.World{}, err
 	}
 	if world.Threads, err = loadOptionalJSON[[]model.WorldThread](filepath.Join(s.worldDir(worldID), "threads.json")); err != nil {

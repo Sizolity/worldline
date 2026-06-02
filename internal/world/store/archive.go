@@ -51,7 +51,7 @@ func ExportWorld(w model.World, out io.Writer) error {
 	if err := addJSON(tw, "events.json", nonNil(w.EventLog)); err != nil {
 		return err
 	}
-	if err := addJSON(tw, "memories.json", nonNil(w.Memory)); err != nil {
+	if err := addJSON(tw, "memories.json", nonNil(w.Memories)); err != nil {
 		return err
 	}
 	return addJSON(tw, "threads.json", nonNil(w.Threads))
@@ -131,7 +131,7 @@ func ImportWorld(r io.Reader, newID string) (model.World, error) {
 	w.Relations = relations
 	w.Facts = facts
 	w.EventLog = events
-	w.Memory = memories
+	w.Memories = memories
 	w.Threads = threads
 
 	if newID != "" {

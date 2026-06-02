@@ -30,7 +30,7 @@ func (v CharacterContextView) Render(world model.World, req CharacterContextRequ
 	}
 	return CharacterContext{
 		Perspective: perspective,
-		Memories:    VisibleMemoriesForCharacter(world.Memory, req.PerspectiveID),
+		Memories:    VisibleMemoriesForCharacter(world.Memories, req.PerspectiveID),
 	}, nil
 }
 

@@ -174,7 +174,7 @@ func TestBuildWorldPromptIncludesFactsRelationsMemories(t *testing.T) {
 			ID: "rel_1", Type: "ally",
 			SourceID: "char_alice", TargetID: "char_bob",
 		}},
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "mem_1",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},
 			Content:     "The war ended ten years ago.",

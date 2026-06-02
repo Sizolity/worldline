@@ -136,8 +136,8 @@ func TestWorldDebugViewDoesNotAliasMutableWorldState(t *testing.T) {
 		},
 		Tags: []string{"hero"},
 	}
-	w.Memory[0].SubjectIDs = []model.EntityID{"char_alice"}
-	w.Memory[0].EventIDs = []model.EventID{"evt_1"}
+	w.Memories[0].SubjectIDs = []model.EntityID{"char_alice"}
+	w.Memories[0].EventIDs = []model.EventID{"evt_1"}
 	w.EventLog[0].ActorIDs = []model.EntityID{"char_alice"}
 	w.EventLog[0].TargetIDs = []model.EntityID{"char_bob"}
 	w.EventLog[0].Effects = []model.Effect{{
@@ -183,8 +183,8 @@ func TestWorldDebugViewDoesNotAliasMutableWorldState(t *testing.T) {
 	if w.Entities["char_alice"].Components["profile"].(map[string]any)["title"] != "knight" {
 		t.Fatalf("entity components were mutated: %#v", w.Entities["char_alice"].Components)
 	}
-	if w.Memory[0].SubjectIDs[0] != "char_alice" || w.Memory[0].EventIDs[0] != "evt_1" {
-		t.Fatalf("memory references were mutated: %#v", w.Memory[0])
+	if w.Memories[0].SubjectIDs[0] != "char_alice" || w.Memories[0].EventIDs[0] != "evt_1" {
+		t.Fatalf("memory references were mutated: %#v", w.Memories[0])
 	}
 	if w.EventLog[0].ActorIDs[0] != "char_alice" || w.EventLog[0].TargetIDs[0] != "char_bob" {
 		t.Fatalf("event references were mutated: %#v", w.EventLog[0])
@@ -210,7 +210,7 @@ func populatedWorld() model.World {
 		Relations: []model.Relation{
 			{ID: "rel_1", Type: "ally", SourceID: "char_alice", TargetID: "char_bob"},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID:          "mem_world_secret",
 				Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},

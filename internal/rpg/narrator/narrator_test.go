@@ -156,18 +156,19 @@ func TestNarrator_Tools_BaseOnly(t *testing.T) {
 		t.Fatalf("Tools(): %v", err)
 	}
 	// Base-only (no rules, no mutable state, no fog) still includes the
-	// five always-on tools: get_entity_state plus the four internal
-	// randomness tools (roll / random / chance / weighted_choice).
+	// five always-on tools: get_entity_state, advance_time, and the three
+	// internal randomness tools (random / chance / weighted_choice). roll is
+	// shelved in v1, so it is not disclosed here.
 	if got, want := len(invokable), 5; got != want {
-		t.Errorf("len(tools) = %d, want %d (get_entity_state + roll + random + chance + weighted_choice)", got, want)
+		t.Errorf("len(tools) = %d, want %d (get_entity_state + advance_time + random + chance + weighted_choice)", got, want)
 	}
 	names := toolNames(t, invokable)
-	for _, want := range []string{"get_entity_state", "roll", "random", "chance", "weighted_choice"} {
+	for _, want := range []string{"get_entity_state", "advance_time", "random", "chance", "weighted_choice"} {
 		if !names[want] {
 			t.Errorf("expected %q to be disclosed, got %v", want, names)
 		}
 	}
-	for _, forbidden := range []string{"lookup_rules", "update_state", "explore_knowledge"} {
+	for _, forbidden := range []string{"lookup_rules", "update_state", "explore_knowledge", "roll"} {
 		if names[forbidden] {
 			t.Errorf("%q must NOT be disclosed under base-only conditions, got %v", forbidden, names)
 		}
@@ -188,7 +189,7 @@ func TestNarrator_Tools_WithFog(t *testing.T) {
 	}
 	names := toolNames(t, invokable)
 	for _, want := range []string{
-		"get_entity_state", "roll", "random", "chance", "weighted_choice",
+		"get_entity_state", "advance_time", "random", "chance", "weighted_choice",
 		"lookup_rules", "explore_knowledge",
 	} {
 		if !names[want] {

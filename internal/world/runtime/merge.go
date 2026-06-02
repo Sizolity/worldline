@@ -71,7 +71,7 @@ func MergeWorlds(base, source, target model.World) (model.World, MergeReport) {
 	mergeThreads(&out, base, source, baseSrc, baseTgt, &report)
 	mergeSlice(&out.Facts, source.Facts, baseSrc.Facts, &report.FactsAdded, "fact")
 	mergeSlice(&out.Relations, source.Relations, baseSrc.Relations, &report.RelationsAdded, "relation")
-	mergeSlice(&out.Memory, source.Memory, baseSrc.Memories, &report.MemoriesAdded, "memory")
+	mergeSlice(&out.Memories, source.Memories, baseSrc.Memories, &report.MemoriesAdded, "memory")
 	mergeSlice(&out.EventLog, source.EventLog, baseSrc.Events, &report.EventsAdded, "event")
 	mergeSlice(&out.Rules, source.Rules, baseSrc.Rules, &report.RulesAdded, "rule")
 

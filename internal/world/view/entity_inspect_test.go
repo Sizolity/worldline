@@ -44,7 +44,7 @@ func inspectTestWorld() model.World {
 		Facts: []model.Fact{
 			{ID: "f1", SubjectID: "alice", Predicate: "status", Value: model.Value{Kind: "string", Raw: "alive"}},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{ID: "m1", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "alice"}, Kind: model.MemoryKindObservation, Content: "Saw the shadow move.", TruthStatus: model.TruthStatusUnknown},
 			{ID: "m2", Owner: model.MemoryOwner{Kind: model.MemoryOwnerKindWorld}, Kind: model.MemoryKindObservation, Content: "World memory.", SubjectIDs: []model.EntityID{"alice"}, TruthStatus: model.TruthStatusTrue},
 		},

@@ -166,7 +166,7 @@ func formatEntityFacts(b *strings.Builder, id model.EntityID, w model.World) {
 
 func formatEntityMemories(b *strings.Builder, id model.EntityID, w model.World) {
 	var memories []model.MemoryRecord
-	for _, m := range w.Memory {
+	for _, m := range w.Memories {
 		if m.Owner.ID == string(id) || containsEntity(m.SubjectIDs, id) {
 			memories = append(memories, m)
 		}

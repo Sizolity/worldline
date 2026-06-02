@@ -82,7 +82,7 @@ func TestNarrativeViewDoesNotAliasMutableWorldState(t *testing.T) {
 			"mood": {Kind: model.ValueKindString, Raw: "calm"},
 		},
 	}}
-	world.Memory[0].SubjectIDs = []model.EntityID{"char_a"}
+	world.Memories[0].SubjectIDs = []model.EntityID{"char_a"}
 
 	got := NarrativeView{}.Render(world, NarrativeContextRequest{})
 	got.World.Canon.Genre[0] = "changed"
@@ -103,8 +103,8 @@ func TestNarrativeViewDoesNotAliasMutableWorldState(t *testing.T) {
 	if world.EventLog[0].Effects[0].Payload["mood"].Raw != "calm" {
 		t.Fatalf("event payload was mutated: %#v", world.EventLog[0].Effects[0].Payload)
 	}
-	if world.Memory[0].SubjectIDs[0] != "char_a" {
-		t.Fatalf("memory subjects were mutated: %#v", world.Memory[0].SubjectIDs)
+	if world.Memories[0].SubjectIDs[0] != "char_a" {
+		t.Fatalf("memory subjects were mutated: %#v", world.Memories[0].SubjectIDs)
 	}
 }
 
@@ -125,7 +125,7 @@ func narrativeWorld() model.World {
 			{ID: "event_2", Type: model.EventTypeNote, Source: model.EventSourceTest},
 			{ID: "event_3", Type: model.EventTypeNote, Source: model.EventSourceTest},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID:          "memory_world_public",
 				Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},

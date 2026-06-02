@@ -210,7 +210,7 @@ func TestFileStoreSaveLoadSnapshot(t *testing.T) {
 			},
 			Priority: 5,
 		}},
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:         "memory_1",
 			Owner:      model.MemoryOwner{Kind: model.MemoryOwnerKindCharacter, ID: "hero"},
 			Content:    "The door is locked.",
@@ -252,8 +252,8 @@ func TestFileStoreSaveLoadSnapshot(t *testing.T) {
 	if len(got.EventQueue) != 1 || got.EventQueue[0].Event.ID != "event_queued" || got.EventQueue[0].Priority != 5 {
 		t.Fatalf("event queue mismatch: %#v", got.EventQueue)
 	}
-	if len(got.Memory) != 1 || got.Memory[0].ID != "memory_1" {
-		t.Fatalf("memory mismatch: %#v", got.Memory)
+	if len(got.Memories) != 1 || got.Memories[0].ID != "memory_1" {
+		t.Fatalf("memory mismatch: %#v", got.Memories)
 	}
 	if len(got.Threads) != 1 || got.Threads[0].ID != "thread_1" {
 		t.Fatalf("threads mismatch: %#v", got.Threads)
@@ -341,7 +341,7 @@ func TestFileStoreSaveSnapshotDoesNotReplaceExistingSnapshotWhenValidationFails(
 		Entities: map[model.EntityID]model.Entity{
 			"villain": {ID: "villain", Type: "character", Name: "Villain"},
 		},
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:         "memory_1",
 			Owner:      model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},
 			Content:    "Invalid memory.",

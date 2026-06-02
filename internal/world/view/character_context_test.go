@@ -33,7 +33,7 @@ func TestCharacterContextViewIncludesOwnAndPublicWorldMemories(t *testing.T) {
 		Entities: map[model.EntityID]model.Entity{
 			"char_b": {ID: "char_b", Type: "character", Name: "B"},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID:          "memory_world_public",
 				Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},
@@ -76,7 +76,7 @@ func TestCharacterContextViewDoesNotLeakOtherOrSecretMemories(t *testing.T) {
 		Entities: map[model.EntityID]model.Entity{
 			"char_b": {ID: "char_b", Type: "character", Name: "B"},
 		},
-		Memory: []model.MemoryRecord{
+		Memories: []model.MemoryRecord{
 			{
 				ID:          "memory_world_secret",
 				Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},
@@ -129,7 +129,7 @@ func TestCharacterContextViewHidesWorldMemoriesWithUnknownTruthStatus(t *testing
 		Entities: map[model.EntityID]model.Entity{
 			"char_b": {ID: "char_b", Type: "character", Name: "B"},
 		},
-		Memory: []model.MemoryRecord{{
+		Memories: []model.MemoryRecord{{
 			ID:          "memory_world_invalid",
 			Owner:       model.MemoryOwner{Kind: model.MemoryOwnerKindWorld},
 			Content:     "Hidden by malformed status.",
