@@ -7,7 +7,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
+	"github.com/cloudwego/eino/callbacks"
+
+	"github.com/sizolity/worldline/internal/agent/observe"
 	"github.com/sizolity/worldline/internal/agent/provider/deepseek"
 	"github.com/sizolity/worldline/internal/agent/react"
 	"github.com/sizolity/worldline/internal/agent/typed"
@@ -20,6 +24,21 @@ import (
 	worldmodel "github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/world/store"
 )
+
+// observeOnce guards global eino callback registration. AppendGlobalHandlers
+// is not thread-safe and accumulates on repeated calls, so the observability
+// handler must be installed exactly once per process even if NewPlayRuntime
+// runs multiple times (e.g. the server building several runtimes).
+var observeOnce sync.Once
+
+// registerObservability installs the process-wide LLM/tool callback handler.
+// It must run before any ChatModel is constructed or invoked so the handler
+// observes every call from the very first one.
+func registerObservability() {
+	observeOnce.Do(func() {
+		callbacks.AppendGlobalHandlers(observe.NewHandler())
+	})
+}
 
 // PlayOptions holds the inputs needed to assemble a play runtime.
 // CLI and server fill this from their own flag/config sources.
@@ -57,6 +76,10 @@ func NewPlayRuntime(ctx context.Context, cfg PlayOptions) (*PlayRuntime, error) 
 	// precede mod.LocateRoot below. This is the temporary home for env
 	// bootstrap; a dedicated init package will own it once it exists.
 	env.LoadIfNeeded(cfg.Workspace)
+
+	// Install the process-wide LLM/tool observability callback before any
+	// ChatModel is built below. Idempotent via sync.Once.
+	registerObservability()
 
 	// 1. Load and merge sidecar config.
 	playCfg, err := resolveSidecar(cfg)

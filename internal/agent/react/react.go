@@ -2,8 +2,11 @@
 // cloudwego/eino's [flow/agent/react] agent. Callers supply an initial
 // conversation (system + user, or whatever shape they need) plus a list
 // of eino [einotool.BaseTool] values, and receive a streaming Stream
-// that yields narrative chunks while tool calls are accumulated into the
-// final [Result].
+// that yields narrative chunks. Tool side effects do not flow back through
+// this Stream — eino's ReAct graph only routes the ChatModel's
+// no-more-tool-calls output to END, so the chunks reaching callers carry
+// pure narrative. Tools surface their effects out-of-band via the shared
+// [ToolContext] (see internal/rpg/tools), which the beat pipeline drains.
 //
 // Tools are passed in eino-native form ([]einotool.BaseTool); business
 // implementations (see internal/rpg/tools) implement eino's tool
@@ -34,25 +37,13 @@ type Request struct {
 	MaxStep  int
 }
 
-// ToolCallRecord captures one tool invocation the model issued during a
-// run. Result is populated by the ReAct loop only when the tool returns
-// without error; failed tool calls still surface here with the original
-// arguments so callers can attribute failures back to the model's intent.
-type ToolCallRecord struct {
-	Name      string
-	Arguments string
-	Result    string
-}
-
 // Result is the terminal value of a Run. Narrative is the concatenated
 // assistant-message body (i.e. everything the model said outside of tool
-// calls). ToolCalls preserves the chronological order of tool invocations.
-// Err is non-nil when the underlying eino agent or transport failed; it is
-// independent of the narrative channel, which is always closed cleanly so
-// range loops in callers terminate.
+// calls). Err is non-nil when the underlying eino agent or transport
+// failed; it is independent of the narrative channel, which is always
+// closed cleanly so range loops in callers terminate.
 type Result struct {
 	Narrative string
-	ToolCalls []ToolCallRecord
 	Err       error
 }
 
@@ -145,15 +136,6 @@ func (a *einoAgent) runPipeline(ctx context.Context, req Request, narrativeCh ch
 		chunk, err := sr.Recv()
 		if err != nil {
 			break
-		}
-		if len(chunk.ToolCalls) > 0 {
-			for _, tc := range chunk.ToolCalls {
-				result.ToolCalls = append(result.ToolCalls, ToolCallRecord{
-					Name:      tc.Function.Name,
-					Arguments: tc.Function.Arguments,
-				})
-			}
-			continue
 		}
 		if chunk.Content != "" {
 			narrativeBuf = append(narrativeBuf, chunk.Content...)

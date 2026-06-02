@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
 	"text/template"
 
 	"github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/world/prompt"
+	"github.com/sizolity/worldline/internal/world/textutil"
 )
 
 // FormatType specifies the template syntax for prompt templates.
@@ -260,7 +260,7 @@ func buildWorldPrompt(w model.World) string {
 }
 
 func parseEventResponse(response string) ([]model.WorldEvent, error) {
-	cleaned := StripMarkdownFences(response)
+	cleaned := textutil.StripMarkdownFences(response)
 	var events []model.WorldEvent
 	if err := json.Unmarshal([]byte(cleaned), &events); err != nil {
 		return nil, fmt.Errorf("invalid JSON: %w", err)
@@ -271,24 +271,4 @@ func parseEventResponse(response string) ([]model.WorldEvent, error) {
 		}
 	}
 	return model.CloneEvents(events), nil
-}
-
-// StripMarkdownFences removes ```json ... ``` or ``` ... ``` wrappers that
-// LLMs commonly add despite being told not to.
-func StripMarkdownFences(s string) string {
-	trimmed := strings.TrimSpace(s)
-	if !strings.HasPrefix(trimmed, "```") {
-		return trimmed
-	}
-	// Remove opening fence line
-	idx := strings.Index(trimmed, "\n")
-	if idx < 0 {
-		return trimmed
-	}
-	inner := trimmed[idx+1:]
-	// Remove closing fence
-	if last := strings.LastIndex(inner, "```"); last >= 0 {
-		inner = inner[:last]
-	}
-	return strings.TrimSpace(inner)
 }

@@ -9,8 +9,8 @@ import (
 
 	"github.com/cloudwego/eino/schema"
 
-	"github.com/sizolity/worldline/internal/world/ingest"
 	"github.com/sizolity/worldline/internal/rpg/role"
+	"github.com/sizolity/worldline/internal/world/ingest"
 )
 
 // mockLoreAgent is a configurable typed.Agent[LoreDraft] for LoreParser tests.

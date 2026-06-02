@@ -57,7 +57,6 @@ func (tc *ToolContext) Roll(_ context.Context, params *RollParams) (string, erro
 	result, _ := json.Marshal(map[string]any{
 		"rolls": rolls, "modifier": params.Modifier, "total": total,
 	})
-	logDice(tc.BeatID, "roll", fmt.Sprintf("sides=%d count=%d modifier=%d -> total=%d", params.Sides, count, params.Modifier, total))
 	return string(result), nil
 }
 
@@ -68,7 +67,6 @@ func (tc *ToolContext) Random(_ context.Context, _ *RandomParams) (string, error
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
 	v := tc.rngLocked().Float64()
-	logDice(tc.BeatID, "random", fmt.Sprintf("-> %.6f", v))
 	data, _ := json.Marshal(map[string]any{"value": v})
 	return string(data), nil
 }
@@ -86,7 +84,6 @@ func (tc *ToolContext) Chance(_ context.Context, params *ChanceParams) (string, 
 		p = 1
 	}
 	v := tc.rngLocked().Float64() < p
-	logDice(tc.BeatID, "chance", fmt.Sprintf("p=%.3f -> %v", p, v))
 	data, _ := json.Marshal(map[string]any{"value": v})
 	return string(data), nil
 }
@@ -123,7 +120,6 @@ func (tc *ToolContext) WeightedChoice(_ context.Context, params *WeightedChoiceP
 			break
 		}
 	}
-	logDice(tc.BeatID, "weighted_choice", fmt.Sprintf("options=%d total=%.3f -> %q", len(params.Options), total, choice))
 	data, _ := json.Marshal(map[string]any{"value": choice})
 	return string(data), nil
 }

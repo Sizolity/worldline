@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/sizolity/worldline/internal/world/store"
 )
 
 // PlayConfig is the persisted per-world play sidecar. It records the
@@ -28,7 +30,7 @@ type PlayConfig struct {
 // and world ID. The file may not exist; callers should treat
 // os.IsNotExist as a clean "no sidecar" signal.
 func PlayConfigPath(workspace, worldID string) string {
-	return filepath.Join(workspace, "worlds", worldID, "play.json")
+	return filepath.Join(store.WorldDir(workspace, worldID), "play.json")
 }
 
 // LoadPlayConfig reads the sidecar at workspace/worlds/<worldID>/play.json.

@@ -152,9 +152,9 @@ func recentPlayerActions(events []model.WorldEvent, limit int) []string {
 	return out
 }
 
-func enabledRules(rules []model.Rule) []rpgrule.Rule {
+func enabledRules(rules []model.Rule) []rpgrule.NarrativeRule {
 	all := rpgrule.FromWorldRules(rules)
-	out := make([]rpgrule.Rule, 0, len(all))
+	out := make([]rpgrule.NarrativeRule, 0, len(all))
 	for _, r := range all {
 		if r.Enabled {
 			out = append(out, r)

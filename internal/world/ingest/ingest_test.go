@@ -294,7 +294,7 @@ func TestCompileDraftPopulatesMemorySubjectsAndEvents(t *testing.T) {
 	}}
 	draft := Draft{Memories: []DraftMemory{{
 		ID: "mem_1", OwnerKind: "character", OwnerID: "char_a",
-		Content: "saw fire",
+		Content:    "saw fire",
 		SubjectIDs: []string{"char_a"}, EventIDs: []string{"evt_1"},
 	}}}
 	result, report, err := CompileDraft(world, draft, CompileOptions{})

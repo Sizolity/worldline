@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-func AssemblePromptSection(rules []Rule) string {
-	var enabled []Rule
+func AssemblePromptSection(rules []NarrativeRule) string {
+	var enabled []NarrativeRule
 	for _, r := range rules {
 		if r.Enabled {
 			enabled = append(enabled, r)
@@ -19,7 +19,7 @@ func AssemblePromptSection(rules []Rule) string {
 	var b strings.Builder
 	b.WriteString("## World Rules\n\n")
 
-	var coreRules []Rule
+	var coreRules []NarrativeRule
 	categoryCount := make(map[string]int)
 
 	for _, r := range enabled {

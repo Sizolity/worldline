@@ -7,8 +7,8 @@ import (
 	"github.com/sizolity/worldline/internal/world/model"
 )
 
-func validRule() Rule {
-	return Rule{
+func validRule() NarrativeRule {
+	return NarrativeRule{
 		ID:       "combat-01",
 		Category: "combat",
 		Level:    0,
@@ -125,7 +125,7 @@ func TestRoundTrip_MapPath(t *testing.T) {
 }
 
 func TestFromModelRule_WrongKind(t *testing.T) {
-	mr := model.Rule{ID: "x", Kind: "other", Enabled: true, Data: Rule{}}
+	mr := model.Rule{ID: "x", Kind: "other", Enabled: true, Data: NarrativeRule{}}
 	_, ok := FromModelRule(mr)
 	if ok {
 		t.Fatal("expected false for wrong kind")

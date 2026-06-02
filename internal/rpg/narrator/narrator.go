@@ -16,10 +16,10 @@ import (
 // mod.Style via WithStyle, and that style MUST contain all three
 // persona docs. New returns an error otherwise.
 type Narrator struct {
-	suggestAgent     typed.Agent[SuggestParams]
-	narratorPersona  *mod.Document
+	suggestAgent      typed.Agent[SuggestParams]
+	narratorPersona   *mod.Document
 	lorekeeperPersona *mod.Document
-	suggesterPersona *mod.Document
+	suggesterPersona  *mod.Document
 }
 
 // Option customizes the Narrator at construction time.

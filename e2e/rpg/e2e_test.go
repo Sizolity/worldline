@@ -13,13 +13,13 @@ import (
 
 	"github.com/sizolity/worldline/internal/agent/react"
 	"github.com/sizolity/worldline/internal/agent/typed"
-	worldmodel "github.com/sizolity/worldline/internal/world/model"
-	"github.com/sizolity/worldline/internal/world/store"
 	"github.com/sizolity/worldline/internal/rpg/mod"
 	"github.com/sizolity/worldline/internal/rpg/narrator"
 	"github.com/sizolity/worldline/internal/rpg/role"
 	"github.com/sizolity/worldline/internal/rpg/rule"
 	"github.com/sizolity/worldline/internal/rpg/session"
+	worldmodel "github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/store"
 )
 
 func TestBeat_DeepSeek_E2E(t *testing.T) {
@@ -119,12 +119,12 @@ func TestBeat_DeepSeek_E2E(t *testing.T) {
 }
 
 func buildTestWorld() worldmodel.World {
-	combatRule := rule.Rule{
+	combatRule := rule.NarrativeRule{
 		ID: "rule-combat-basic", Category: "combat", Level: 0,
 		Content: "Roll d20 for attack and skill checks", Source: rule.SourceSystem,
 		Enabled: true,
 	}
-	exploreRule := rule.Rule{
+	exploreRule := rule.NarrativeRule{
 		ID: "rule-explore", Category: "exploration", Level: 0,
 		Content: "Perception checks reveal hidden objects and traps", Source: rule.SourceSystem,
 		Enabled: true,

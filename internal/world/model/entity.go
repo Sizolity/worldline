@@ -3,10 +3,10 @@ package model
 import "fmt"
 
 type Entity struct {
-	ID          EntityID         `json:"id"`
-	Type        string           `json:"type"`
-	Name        string           `json:"name"`
-	Description string           `json:"description,omitempty"`
+	ID          EntityID `json:"id"`
+	Type        string   `json:"type"`
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
 	// Aliases is the set of additional human-readable names this entity
 	// is known by (nicknames, epithets, translations, code-names).
 	// Distinct from Name (the canonical display name) and Tags (taxonomy).

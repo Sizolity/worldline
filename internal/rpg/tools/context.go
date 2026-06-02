@@ -1,9 +1,7 @@
 package tools
 
 import (
-	"fmt"
 	"math/rand/v2"
-	"os"
 	"sync"
 
 	"github.com/sizolity/worldline/internal/rpg/fog"
@@ -18,9 +16,6 @@ type ToolContext struct {
 	PendingEffects []model.Effect
 	Rng            *rand.Rand
 	Disclosure     *fog.DisclosureState // nil = fog disabled
-	// BeatID, when set, is folded into debug-log lines emitted by the
-	// internal randomness tools. Optional; tools work without it.
-	BeatID string
 }
 
 // GetPendingEffects returns a copy of accumulated effects (goroutine-safe).
@@ -63,20 +58,4 @@ func hasMutableEntities(w model.World) bool {
 		}
 	}
 	return false
-}
-
-// logDice emits a single-line stderr trace for each internal-randomness
-// call, gated by the WORLDLINE_DEBUG_DICE environment variable per
-// directive 2.3. Output is **stderr only** — the player-facing stdout
-// stream never sees these so the "zero visible judgment" red line
-// stays intact.
-func logDice(beatID, tool, detail string) {
-	if os.Getenv("WORLDLINE_DEBUG_DICE") == "" {
-		return
-	}
-	if beatID != "" {
-		fmt.Fprintf(os.Stderr, "dice[%s]: %s(%s)\n", beatID, tool, detail)
-		return
-	}
-	fmt.Fprintf(os.Stderr, "dice: %s(%s)\n", tool, detail)
 }

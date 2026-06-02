@@ -10,14 +10,14 @@ import (
 // WorldDebugContext is a read-only GM/debug projection that exposes the
 // complete world truth with no ownership or visibility filtering.
 type WorldDebugContext struct {
-	World      WorldSummary         `json:"world"`
-	Entities   []model.Entity       `json:"entities"`
-	Facts      []model.Fact         `json:"facts"`
-	Relations  []model.Relation     `json:"relations"`
-	Memories   []model.MemoryRecord `json:"memories"`
-	Threads    []model.WorldThread  `json:"threads"`
-	Rules      []model.Rule         `json:"rules"`
-	EventLog   []model.WorldEvent   `json:"event_log"`
+	World      WorldSummary           `json:"world"`
+	Entities   []model.Entity         `json:"entities"`
+	Facts      []model.Fact           `json:"facts"`
+	Relations  []model.Relation       `json:"relations"`
+	Memories   []model.MemoryRecord   `json:"memories"`
+	Threads    []model.WorldThread    `json:"threads"`
+	Rules      []model.Rule           `json:"rules"`
+	EventLog   []model.WorldEvent     `json:"event_log"`
 	EventQueue []model.EventQueueItem `json:"event_queue"`
 }
 
@@ -56,7 +56,7 @@ func (v WorldDebugView) Render(w model.World) WorldDebugContext {
 				Boundaries: nonNilClone(w.Canon.Boundaries),
 				Secrets:    nonNilClone(w.Canon.Secrets),
 			},
-			Clock:    w.Clock.Clone(),
+			Clock: w.Clock.Clone(),
 			Metadata: model.WorldMetadata{
 				SchemaVersion: w.Metadata.SchemaVersion,
 				Source:        w.Metadata.Source,

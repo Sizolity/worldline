@@ -2,12 +2,11 @@ package status
 
 import (
 	"context"
-	"path/filepath"
 	"sort"
 
+	"github.com/sizolity/worldline/internal/rpg/story"
 	worldmodel "github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/world/store"
-	"github.com/sizolity/worldline/internal/rpg/story"
 )
 
 // ThreadInfo holds display-ready data for one world thread.
@@ -54,24 +53,24 @@ type MemoryCounts struct {
 
 // NPCMemoryStat ranks a character entity by sedimented memory count.
 type NPCMemoryStat struct {
-	Name  string             `json:"name"`
+	Name  string              `json:"name"`
 	ID    worldmodel.EntityID `json:"id"`
-	Count int                `json:"count"`
+	Count int                 `json:"count"`
 }
 
 // Report is the structured result of Build, ready for JSON serialization
 // by the server or text rendering by the CLI.
 type Report struct {
-	WorldID       string             `json:"world_id"`
-	WorldName     string             `json:"world_name"`
-	ClockSequence int64              `json:"clock_sequence"`
+	WorldID       string                   `json:"world_id"`
+	WorldName     string                   `json:"world_name"`
+	ClockSequence int64                    `json:"clock_sequence"`
 	ClockKind     worldmodel.WorldTimeKind `json:"clock_kind"`
-	Threads       []ThreadInfo       `json:"threads"`
-	WorldLines    []WorldLineInfo    `json:"world_lines,omitempty"`
-	RecentEvents  []EventInfo        `json:"recent_events,omitempty"`
-	EntityCounts  EntityCounts       `json:"entity_counts"`
-	MemoryCounts  MemoryCounts       `json:"memory_counts"`
-	NPCMemoryTop  []NPCMemoryStat    `json:"npc_memory_top,omitempty"`
+	Threads       []ThreadInfo             `json:"threads"`
+	WorldLines    []WorldLineInfo          `json:"world_lines,omitempty"`
+	RecentEvents  []EventInfo              `json:"recent_events,omitempty"`
+	EntityCounts  EntityCounts             `json:"entity_counts"`
+	MemoryCounts  MemoryCounts             `json:"memory_counts"`
+	NPCMemoryTop  []NPCMemoryStat          `json:"npc_memory_top,omitempty"`
 }
 
 // Build loads the world and assembles a status report. The tail parameter
@@ -98,7 +97,7 @@ func Build(ctx context.Context, workspace, worldID string, tail int) (*Report, e
 		})
 	}
 
-	lines, _ := story.NewStore(filepath.Join(workspace, "worlds")).Load(worldID)
+	lines, _ := story.NewStore(store.WorldsDir(workspace)).Load(worldID)
 	for _, l := range lines {
 		triggered := 0
 		for _, m := range l.Milestones {

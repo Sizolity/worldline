@@ -13,13 +13,13 @@ import (
 
 	"github.com/sizolity/worldline/internal/agent/react"
 	"github.com/sizolity/worldline/internal/agent/typed"
-	worldmodel "github.com/sizolity/worldline/internal/world/model"
-	"github.com/sizolity/worldline/internal/world/store"
 	"github.com/sizolity/worldline/internal/rpg/mod"
 	"github.com/sizolity/worldline/internal/rpg/narrator"
 	"github.com/sizolity/worldline/internal/rpg/role"
 	"github.com/sizolity/worldline/internal/rpg/session"
 	"github.com/sizolity/worldline/internal/rpg/story"
+	worldmodel "github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/store"
 )
 
 func TestBeat_DeepSeek_WorldLine_E2E(t *testing.T) {

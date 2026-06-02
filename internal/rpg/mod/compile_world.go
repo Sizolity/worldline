@@ -78,8 +78,8 @@ func CompileScenarioToWorld(sc *Scenario, worldID string) (worldmodel.World, err
 
 	rules := make([]worldmodel.Rule, 0, len(sc.Rules))
 	for i, r := range sc.Rules {
-		rules = append(rules, rule.ToModelRule(rule.Rule{
-			ID:      worldmodel.RuleID(ruleID(i)),
+		rules = append(rules, rule.ToModelRule(rule.NarrativeRule{
+			ID:       worldmodel.RuleID(ruleID(i)),
 			Category: "general",
 			Level:    0,
 			Content:  r.Body,

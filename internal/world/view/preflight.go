@@ -10,11 +10,11 @@ import (
 
 // PreflightResult combines validation, budget, and readiness checks.
 type PreflightResult struct {
-	WorldID    string           `json:"world_id"`
+	WorldID    string                   `json:"world_id"`
 	Validation runtime.ValidationReport `json:"validation"`
-	Budget     BudgetEstimate   `json:"budget"`
-	Readiness  []ReadinessCheck `json:"readiness"`
-	Pass       bool             `json:"pass"`
+	Budget     BudgetEstimate           `json:"budget"`
+	Readiness  []ReadinessCheck         `json:"readiness"`
+	Pass       bool                     `json:"pass"`
 }
 
 // ReadinessCheck is a single go/no-go condition.

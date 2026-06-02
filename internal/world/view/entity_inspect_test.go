@@ -186,12 +186,17 @@ func TestFormatEntityListEmpty(t *testing.T) {
 	}
 }
 
-func TestTruncate(t *testing.T) {
+func TestTruncateRunes(t *testing.T) {
 	t.Parallel()
-	if got := truncate("short", 10); got != "short" {
+	if got := TruncateRunes("short", 10); got != "short" {
 		t.Errorf("got %q", got)
 	}
-	if got := truncate("this is a very long string", 10); got != "this is..." {
+	if got := TruncateRunes("this is a very long string", 10); got != "this is a …" {
+		t.Errorf("got %q", got)
+	}
+	// CJK runes must not be split mid-byte: 5 runes capped to 3 yields 3
+	// full characters plus the ellipsis, never an invalid UTF-8 fragment.
+	if got := TruncateRunes("一二三四五", 3); got != "一二三…" {
 		t.Errorf("got %q", got)
 	}
 }

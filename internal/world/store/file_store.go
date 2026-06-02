@@ -16,7 +16,7 @@ type FileStore struct {
 }
 
 func NewFileStore(workspace string) *FileStore {
-	return &FileStore{root: filepath.Join(workspace, "worlds")}
+	return &FileStore{root: WorldsDir(workspace)}
 }
 
 func (s *FileStore) SaveWorld(_ context.Context, world model.World) error {

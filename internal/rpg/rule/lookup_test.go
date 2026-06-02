@@ -6,7 +6,7 @@ import (
 )
 
 func TestLookup_FilterByCategory(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "A", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "magic", Level: 1, Content: "B", Source: SourceSystem, Enabled: true},
 		{ID: "r3", Category: "combat", Level: 2, Content: "C", Source: SourceSystem, Enabled: true},
@@ -23,7 +23,7 @@ func TestLookup_FilterByCategory(t *testing.T) {
 }
 
 func TestLookup_FilterByTags(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "A", Source: SourceSystem, Enabled: true, Tags: []string{"melee", "sword"}},
 		{ID: "r2", Category: "combat", Level: 1, Content: "B", Source: SourceSystem, Enabled: true, Tags: []string{"ranged"}},
 		{ID: "r3", Category: "magic", Level: 1, Content: "C", Source: SourceSystem, Enabled: true, Tags: []string{"fire"}},
@@ -35,7 +35,7 @@ func TestLookup_FilterByTags(t *testing.T) {
 }
 
 func TestLookup_SkipDisabled(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "A", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "combat", Level: 1, Content: "B", Source: SourceSystem, Enabled: false},
 	}
@@ -46,7 +46,7 @@ func TestLookup_SkipDisabled(t *testing.T) {
 }
 
 func TestLookup_CategoryAndTags(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "A", Source: SourceSystem, Enabled: true, Tags: []string{"melee"}},
 		{ID: "r2", Category: "combat", Level: 1, Content: "B", Source: SourceSystem, Enabled: true, Tags: []string{"ranged"}},
 		{ID: "r3", Category: "magic", Level: 1, Content: "C", Source: SourceSystem, Enabled: true, Tags: []string{"melee"}},
@@ -61,7 +61,7 @@ func TestLookup_CategoryAndTags(t *testing.T) {
 }
 
 func TestFormatRules_NonEmpty(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "Strike first", Source: SourceSystem, Enabled: true, Tags: []string{"melee"}},
 		{ID: "r2", Category: "combat", Level: 1, Content: "Parry second", Source: SourceSystem, Enabled: true},
 	}

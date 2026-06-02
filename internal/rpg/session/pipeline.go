@@ -289,4 +289,3 @@ func buildBeatEventDescription(playerAction, narrative string) string {
 		return "Player: " + playerAction + "\nNarrative: " + summary
 	}
 }
-

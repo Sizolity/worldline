@@ -27,6 +27,11 @@ type Scenario struct {
 	// Events lists each events/*.md in lexicographic filename order.
 	Events []EventDoc
 
+	// WorldLines lists each worldlines/*.md in lexicographic filename
+	// order. Optional (mechanic layer is opt-in); a missing worldlines/
+	// dir leaves this nil and the scenario compiles with no hidden lines.
+	WorldLines []WorldLineDoc
+
 	// PlayerIndex is the index into Characters of the lone `role: player`
 	// entry. -1 if loading rejected (no player) — Load returns an error in
 	// that case so callers can assume PlayerIndex >= 0.
@@ -76,6 +81,40 @@ type EventDoc struct {
 	FileSlug string
 	Title    string
 	Body     string
+}
+
+// WorldLineDoc is one worldlines/<slug>.md — the author-facing form of a
+// hidden mechanic line (drift / milestone conditions / effects). All
+// fields are human handles: numbers and engine IDs are resolved later by
+// CompileScenarioToWorldLines against the Go keyword tables and the
+// scenario's thread/character indexes. Authors never write thread-N IDs
+// or raw tension numbers.
+type WorldLineDoc struct {
+	FileSlug   string // filename without ".md"; the line ID is "wl_<slug>"
+	Title      string // H1 (descriptive; ignored by the compiler)
+	ThreadName string // frontmatter `thread`: a threads.md H2 title
+	Visibility string // frontmatter `visibility`; "" defaults to hidden
+	Stage      string // frontmatter `stage` → WorldLine.CurrentStage
+	Tempo      string // frontmatter `tempo`: a drift keyword (微澜/渐磨/紧迫)
+
+	// Milestones are the H2 sections in source order (positional IDs m1,
+	// m2, ... assigned at compile time).
+	Milestones []MilestoneSpec
+}
+
+// MilestoneSpec is one H2 block inside a worldlines/<slug>.md file.
+type MilestoneSpec struct {
+	Title    string        // H2 title (descriptive; not the milestone ID)
+	Band     string        // tension band keyword from the 触发 line (初现/加深/决裂/临界)
+	Outcomes []OutcomeSpec // the 结果 bullets, in source order
+}
+
+// OutcomeSpec is one `- 目标：词` bullet under 结果. Target is a display
+// name (a thread title or character name); Word is either a thread status
+// word or an entity disposition word, disambiguated at compile time.
+type OutcomeSpec struct {
+	Target string
+	Word   string
 }
 
 // Role constants mirror the README's `role:` values.

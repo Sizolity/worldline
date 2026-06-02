@@ -16,9 +16,9 @@ const (
 
 // DisclosureState tracks what the player has discovered in a specific world.
 type DisclosureState struct {
-	Entities  map[model.EntityID]EntityDisclosure   `json:"entities,omitempty"`
-	Facts     map[model.FactID]bool                 `json:"facts,omitempty"`
-	Relations map[model.RelationID]bool             `json:"relations,omitempty"`
+	Entities  map[model.EntityID]EntityDisclosure `json:"entities,omitempty"`
+	Facts     map[model.FactID]bool               `json:"facts,omitempty"`
+	Relations map[model.RelationID]bool           `json:"relations,omitempty"`
 }
 
 // EntityDisclosure describes visibility for a single entity.

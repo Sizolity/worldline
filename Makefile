@@ -20,13 +20,13 @@ build:
 	go build -o bin/rpg-server ./cmd/rpg-server
 
 fmt:
-	gofmt -w ./agent ./cmd ./e2e ./internal ./rpg ./world
+	gofmt -w ./cmd ./e2e ./internal
 
 staticcheck:
 	staticcheck ./...
 
 gopls-check:
-	find ./agent ./cmd ./e2e ./internal ./rpg ./world -name '*.go' -not -path '*/testdata/*' -print0 | xargs -0 gopls check
+	find ./cmd ./e2e ./internal -name '*.go' -not -path '*/testdata/*' -print0 | xargs -0 gopls check
 
 lint: vet staticcheck
 

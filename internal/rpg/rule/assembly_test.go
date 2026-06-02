@@ -13,7 +13,7 @@ func TestAssemblePromptSection_Empty(t *testing.T) {
 }
 
 func TestAssemblePromptSection_AllDisabled(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 0, Content: "x", Source: SourceSystem, Enabled: false},
 	}
 	got := AssemblePromptSection(rules)
@@ -23,7 +23,7 @@ func TestAssemblePromptSection_AllDisabled(t *testing.T) {
 }
 
 func TestAssemblePromptSection_L0InFullText(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 0, Content: "Always roll dice", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "magic", Level: 0, Content: "Magic costs mana", Source: SourceSystem, Enabled: true},
 	}
@@ -40,7 +40,7 @@ func TestAssemblePromptSection_L0InFullText(t *testing.T) {
 }
 
 func TestAssemblePromptSection_CategoryIndex(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 1, Content: "detail A", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "combat", Level: 1, Content: "detail B", Source: SourceSystem, Enabled: true},
 		{ID: "r3", Category: "magic", Level: 2, Content: "secret spell", Source: SourceSystem, Enabled: true},
@@ -61,7 +61,7 @@ func TestAssemblePromptSection_CategoryIndex(t *testing.T) {
 }
 
 func TestAssemblePromptSection_L2ContentNotInPrompt(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 0, Content: "Core rule", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "secrets", Level: 2, Content: "HIDDEN_SECRET_CONTENT", Source: SourceSystem, Enabled: true},
 	}
@@ -72,7 +72,7 @@ func TestAssemblePromptSection_L2ContentNotInPrompt(t *testing.T) {
 }
 
 func TestAssemblePromptSection_DisabledSkipped(t *testing.T) {
-	rules := []Rule{
+	rules := []NarrativeRule{
 		{ID: "r1", Category: "combat", Level: 0, Content: "Active rule", Source: SourceSystem, Enabled: true},
 		{ID: "r2", Category: "combat", Level: 0, Content: "Disabled rule", Source: SourceSystem, Enabled: false},
 	}

@@ -46,10 +46,10 @@ type SeedRequest struct {
 // SeedResult summarizes what SeedFromMod wrote — used by the CLI to
 // produce the "已铺设" success banner without re-loading the mod.
 type SeedResult struct {
-	Scenario         *mod.Scenario
-	Style            *mod.Style
-	PlayConfig       app.PlayConfig
-	WorldlinesCount  int
+	Scenario          *mod.Scenario
+	Style             *mod.Style
+	PlayConfig        app.PlayConfig
+	WorldlinesCount   int
 	OverwroteExisting bool
 }
 
@@ -84,7 +84,7 @@ func SeedFromMod(ctx context.Context, req SeedRequest) (*SeedResult, error) {
 		return nil, fmt.Errorf("mkdir workspace: %w", err)
 	}
 
-	worldJSON := filepath.Join(req.Workspace, "worlds", worldID, "world.json")
+	worldJSON := filepath.Join(store.WorldDir(req.Workspace, worldID), "world.json")
 	overwrote := false
 	if _, err := os.Stat(worldJSON); err == nil {
 		if !req.Force {
@@ -116,8 +116,11 @@ func SeedFromMod(ctx context.Context, req SeedRequest) (*SeedResult, error) {
 		return nil, fmt.Errorf("save world: %w", err)
 	}
 
-	worldsDir := filepath.Join(req.Workspace, "worlds")
-	lines := mod.CompileScenarioToWorldLines(scenario)
+	worldsDir := store.WorldsDir(req.Workspace)
+	lines, err := mod.CompileScenarioToWorldLines(scenario)
+	if err != nil {
+		return nil, fmt.Errorf("compile worldlines: %w", err)
+	}
 	if lines == nil {
 		lines = []story.WorldLine{}
 	}

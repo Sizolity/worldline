@@ -13,7 +13,7 @@ const (
 	Kind         = "rpg_narrative"
 )
 
-type Rule struct {
+type NarrativeRule struct {
 	ID          model.RuleID `json:"id"`
 	Category    string       `json:"category"`
 	Level       int          `json:"level"`
@@ -24,7 +24,7 @@ type Rule struct {
 	SceneFilter string       `json:"scene_filter,omitempty"`
 }
 
-func (r Rule) Validate() error {
+func (r NarrativeRule) Validate() error {
 	if err := model.ValidateID(string(r.ID)); err != nil {
 		return fmt.Errorf("rule.id: %w", err)
 	}
@@ -43,29 +43,29 @@ func (r Rule) Validate() error {
 	return nil
 }
 
-func ToModelRule(r Rule) model.Rule {
+func ToModelRule(r NarrativeRule) model.Rule {
 	return model.Rule{ID: r.ID, Kind: Kind, Enabled: r.Enabled, Data: r}
 }
 
-func FromModelRule(mr model.Rule) (Rule, bool) {
+func FromModelRule(mr model.Rule) (NarrativeRule, bool) {
 	if mr.Kind != Kind {
-		return Rule{}, false
+		return NarrativeRule{}, false
 	}
 	switch data := mr.Data.(type) {
-	case Rule:
+	case NarrativeRule:
 		return data, true
 	case map[string]any:
 		b, _ := json.Marshal(data)
-		var r Rule
+		var r NarrativeRule
 		if json.Unmarshal(b, &r) == nil {
 			return r, true
 		}
 	}
-	return Rule{}, false
+	return NarrativeRule{}, false
 }
 
-func FromWorldRules(rules []model.Rule) []Rule {
-	out := make([]Rule, 0, len(rules))
+func FromWorldRules(rules []model.Rule) []NarrativeRule {
+	out := make([]NarrativeRule, 0, len(rules))
 	for _, mr := range rules {
 		if r, ok := FromModelRule(mr); ok {
 			out = append(out, r)

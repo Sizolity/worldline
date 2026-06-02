@@ -12,14 +12,14 @@ import (
 	einotool "github.com/cloudwego/eino/components/tool"
 
 	"github.com/sizolity/worldline/internal/agent/react"
-	"github.com/sizolity/worldline/internal/world/ingest"
-	worldmodel "github.com/sizolity/worldline/internal/world/model"
-	"github.com/sizolity/worldline/internal/world/store"
 	"github.com/sizolity/worldline/internal/rpg/fog"
 	"github.com/sizolity/worldline/internal/rpg/role"
 	"github.com/sizolity/worldline/internal/rpg/rule"
 	"github.com/sizolity/worldline/internal/rpg/story"
 	"github.com/sizolity/worldline/internal/rpg/tools"
+	"github.com/sizolity/worldline/internal/world/ingest"
+	worldmodel "github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/store"
 )
 
 // mockGM satisfies role.GM with deterministic, LLM-free behavior.
@@ -113,7 +113,7 @@ func setupTestWorld(t *testing.T) (string, worldmodel.World) {
 	t.Helper()
 	dir := t.TempDir()
 
-	combatRule := rule.Rule{
+	combatRule := rule.NarrativeRule{
 		ID: "rule-combat-01", Category: "combat", Level: 0,
 		Content: "Attack rolls use d20 + modifier", Source: rule.SourceSystem,
 		Enabled: true, Tags: []string{"melee"},

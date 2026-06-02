@@ -10,8 +10,8 @@ type LookupFilter struct {
 	Tags     []string
 }
 
-func Lookup(rules []Rule, filter LookupFilter) []Rule {
-	var out []Rule
+func Lookup(rules []NarrativeRule, filter LookupFilter) []NarrativeRule {
+	var out []NarrativeRule
 	for _, r := range rules {
 		if !r.Enabled {
 			continue
@@ -38,7 +38,7 @@ func hasAnyTag(ruleTags, filterTags []string) bool {
 	return false
 }
 
-func FormatRules(rules []Rule) string {
+func FormatRules(rules []NarrativeRule) string {
 	if len(rules) == 0 {
 		return ""
 	}

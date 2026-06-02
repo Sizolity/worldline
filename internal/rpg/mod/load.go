@@ -129,6 +129,21 @@ func LoadScenario(root, id string) (*Scenario, error) {
 		})
 	}
 
+	// worldlines/*.md (optional, opt-in mechanic layer). A missing
+	// directory yields no lines — CompileScenarioToWorldLines then returns
+	// nil and the scenario degrades to "no hidden thread engine".
+	wls, err := loadDocsInDir(filepath.Join(dir, "worldlines"))
+	if err != nil {
+		return nil, fmt.Errorf("worldlines: %w", err)
+	}
+	for _, entry := range wls {
+		wl, err := parseWorldLineDoc(entry.slug, entry.doc)
+		if err != nil {
+			return nil, fmt.Errorf("worldlines: %w", err)
+		}
+		sc.WorldLines = append(sc.WorldLines, wl)
+	}
+
 	// Sanity check derived entity IDs at load-time so a malformed slug
 	// fails loud here rather than deep inside the runtime validator.
 	if err := sanityCheckIDs(sc); err != nil {
@@ -316,6 +331,12 @@ func sanityCheckIDs(sc *Scenario) error {
 		id := eventEntityID(e)
 		if err := model.ValidateID(id); err != nil {
 			return fmt.Errorf("event %q: derived id %q is invalid: %w", e.FileSlug, id, err)
+		}
+	}
+	for _, wl := range sc.WorldLines {
+		id := worldLineID(wl)
+		if err := model.ValidateID(id); err != nil {
+			return fmt.Errorf("worldline %q: derived id %q is invalid: %w", wl.FileSlug, id, err)
 		}
 	}
 	return nil

@@ -54,7 +54,7 @@ func FormatEntityList(w model.World) string {
 		for _, e := range ents {
 			fmt.Fprintf(&b, "  %s  %s", e.ID, e.Name)
 			if e.Description != "" {
-				fmt.Fprintf(&b, " — %s", truncate(e.Description, 60))
+				fmt.Fprintf(&b, " — %s", TruncateRunes(e.Description, 60))
 			}
 			b.WriteByte('\n')
 		}
@@ -180,7 +180,7 @@ func formatEntityMemories(b *strings.Builder, id model.EntityID, w model.World) 
 		if text == "" {
 			text = m.Summary
 		}
-		fmt.Fprintf(b, "- [%s] %s\n", m.Kind, truncate(text, 80))
+		fmt.Fprintf(b, "- [%s] %s\n", m.Kind, TruncateRunes(text, 80))
 	}
 }
 
@@ -191,11 +191,4 @@ func containsEntity(ids []model.EntityID, target model.EntityID) bool {
 		}
 	}
 	return false
-}
-
-func truncate(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	return s[:max-3] + "..."
 }

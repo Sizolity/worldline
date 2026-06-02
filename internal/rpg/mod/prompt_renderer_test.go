@@ -72,7 +72,7 @@ func TestRenderPersonaPrompt_ReplacesReservedH2(t *testing.T) {
 func TestRenderPersonaPrompt_FogDisabledDropsDiscovery(t *testing.T) {
 	doc, _ := ParseDocument(testPersonaMD)
 	out := RenderPersonaPrompt(doc, PromptSections{
-		World:    "world body",
+		World:     "world body",
 		Discovery: "", // fog disabled
 	}, "")
 

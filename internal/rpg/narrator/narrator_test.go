@@ -9,12 +9,12 @@ import (
 	einotool "github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 
-	"github.com/sizolity/worldline/internal/world/model"
-	"github.com/sizolity/worldline/internal/world/view"
 	"github.com/sizolity/worldline/internal/rpg/fog"
 	"github.com/sizolity/worldline/internal/rpg/role"
 	rpgrule "github.com/sizolity/worldline/internal/rpg/rule"
 	"github.com/sizolity/worldline/internal/rpg/tools"
+	"github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/view"
 )
 
 // mockSuggestAgent is a typed.Agent[SuggestParams] for tests.
@@ -31,7 +31,7 @@ func (m *mockSuggestAgent) Call(_ context.Context, _ []*schema.Message) (Suggest
 }
 
 func testWorld() model.World {
-	combatRule := rpgrule.Rule{
+	combatRule := rpgrule.NarrativeRule{
 		ID: "rule-combat-01", Category: "combat", Level: 0,
 		Content: "Attack rolls use d20 + modifier", Source: rpgrule.SourceSystem,
 		Enabled: true, Tags: []string{"melee"},

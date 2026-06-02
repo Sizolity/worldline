@@ -17,10 +17,10 @@ import (
 // outputs so we can assert (a) the system/user prompt content and (b)
 // how the Resolver handles success / failure.
 type stubAgent struct {
-	calls    int
-	gotMsgs  []*schema.Message
-	out      Params
-	err      error
+	calls   int
+	gotMsgs []*schema.Message
+	out     Params
+	err     error
 }
 
 func (s *stubAgent) Call(_ context.Context, msgs []*schema.Message) (Params, error) {

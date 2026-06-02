@@ -13,6 +13,25 @@ type BeatInput struct {
 	RecentEvents int
 }
 
+// WrapPlayerAction frames a raw player input as an explicit "next-beat
+// action" instruction for the Narrator. Without this prefix the LLM tends
+// to treat short user messages as commentary on the previous narrative and
+// re-tells the prior beat instead of executing the new action.
+//
+// The framing is deliberately strict: read prior events, advance from where
+// the last beat ended, do not re-narrate established facts. This is beat-input
+// orchestration shared by every entry point (CLI REPL today, HTTP /beat
+// next), not presentation — so it lives here rather than in any single
+// front-end to keep the two entry points behaviourally consistent.
+func WrapPlayerAction(content, playerName string) string {
+	if playerName == "" {
+		playerName = "玩家"
+	}
+	return "【" + playerName + "本回合行动】\n" + content + "\n\n" +
+		"请阅读 ## 最近事件 中本回合之前的所有事件，明确从上一段叙事的结束状态接着推进；" +
+		"必须执行上述行动并描述其直接后果与新出现的变化，不要重复上一段已经发生过的细节。"
+}
+
 // BeatResult is the final outcome of a beat after the narrative stream has
 // fully drained. Callers receive it on BeatOutput.Done after iterating
 // BeatOutput.NarrativeStream to completion.

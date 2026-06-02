@@ -6,17 +6,17 @@ import (
 	"math/rand/v2"
 	"testing"
 
-	"github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/rpg/rule"
+	"github.com/sizolity/worldline/internal/world/model"
 )
 
 func testWorld() model.World {
-	combatRule := rule.Rule{
+	combatRule := rule.NarrativeRule{
 		ID: "rule-combat-01", Category: "combat", Level: 1,
 		Content: "Attack rolls use d20 + modifier", Source: rule.SourceSystem,
 		Enabled: true, Tags: []string{"melee"},
 	}
-	socialRule := rule.Rule{
+	socialRule := rule.NarrativeRule{
 		ID: "rule-social-01", Category: "social", Level: 1,
 		Content: "Persuasion checks use d20 + charisma", Source: rule.SourceSystem,
 		Enabled: true, Tags: []string{"dialogue"},

@@ -42,9 +42,9 @@ cmd/
 └── rpg-server/              HTTP server scaffold
 internal/
 ├── agent/                   agent orchestration layer (built on cloudwego/eino)
-│   ├── react/               multi-step ReAct loop (streaming narrative + tool calls)
+│   ├── react/               multi-step ReAct loop (streaming narrative)
 │   ├── typed/               single-shot structured extraction (ToolCall[T] / JSONObject[T])
-│   ├── tool/                worldline-native Tool interface + eino adapter
+│   ├── observe/             eino callbacks: LLM token/latency stats + tool tracing
 │   └── provider/            LLM provider factories
 │       ├── deepseek/        DeepSeek ChatModel factory
 │       └── internal/        shared LLM provider infrastructure
@@ -52,11 +52,12 @@ internal/
 ├── world/                   world simulation framework
 │   ├── model/               World, Entity, WorldEvent, MemoryRecord, clone methods
 │   ├── runtime/             ApplyEvent, Step, Run, builtin rules
-│   ├── store/               FileStore + WorldTemplate
+│   ├── store/               FileStore (snapshots, checkpoints, fork) + path helpers
 │   ├── view/                NarrativeView, WorldDebugView, CharacterContextView
 │   ├── ingest/              Draft → World compile pipeline
+│   ├── textutil/            neutral LLM-output text helpers (StripMarkdownFences)
 │   └── director/            event proposal interface + script/random/reconcile/
-│                            event-table/LLM directors, StripMarkdownFences
+│                            event-table/LLM directors
 ├── rpg/                     RPG product code
 │   ├── app/                 play-runtime wiring (PlayConfig → PlayRuntime)
 │   ├── seed/                CLI seed command: compile mod → world snapshot + worldlines
@@ -71,6 +72,7 @@ internal/
 │   ├── rule/                RPG narrative rule schema + helpers
 │   ├── tools/               roll / update_state / lookup_rules / ...
 │   └── intent/              LLM-driven REPL input interpreter
+├── markdown/                general markdown/frontmatter parser (Document/Section)
 └── env/                     environment loading & project init
 e2e/rpg/                     real-DeepSeek end-to-end tests (build tag e2e)
 mod/                         mod data: scenarios, styles, persona markdown files

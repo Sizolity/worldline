@@ -26,18 +26,18 @@ type File struct {
 }
 
 type DirectorConfig struct {
-	ID           string                     `json:"id"`
-	Kind         string                     `json:"kind"`
-	Events       []model.WorldEvent         `json:"events,omitempty"`
-	Cases        []ReconcileCase   `json:"cases,omitempty"`
-	Entries      []EventTableEntry `json:"entries,omitempty"`
-	Seed         *int64                     `json:"seed,omitempty"`
-	SystemPrompt         string                     `json:"system_prompt,omitempty"`
-	SystemPromptTemplate string                     `json:"system_prompt_template,omitempty"`
-	TemplateFormat       string                     `json:"template_format,omitempty"`
-	Provider             string                     `json:"provider,omitempty"`
-	Model                string                     `json:"model,omitempty"`
-	MaxRepairAttempts    *int                       `json:"max_repair_attempts,omitempty"`
+	ID                   string             `json:"id"`
+	Kind                 string             `json:"kind"`
+	Events               []model.WorldEvent `json:"events,omitempty"`
+	Cases                []ReconcileCase    `json:"cases,omitempty"`
+	Entries              []EventTableEntry  `json:"entries,omitempty"`
+	Seed                 *int64             `json:"seed,omitempty"`
+	SystemPrompt         string             `json:"system_prompt,omitempty"`
+	SystemPromptTemplate string             `json:"system_prompt_template,omitempty"`
+	TemplateFormat       string             `json:"template_format,omitempty"`
+	Provider             string             `json:"provider,omitempty"`
+	Model                string             `json:"model,omitempty"`
+	MaxRepairAttempts    *int               `json:"max_repair_attempts,omitempty"`
 }
 
 // GeneratorFactory builds a TextGenerator from the provider and model

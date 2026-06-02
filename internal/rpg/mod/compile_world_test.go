@@ -150,7 +150,10 @@ func TestCompileScenarioToWorldLines_Xiyou(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadScenario: %v", err)
 	}
-	lines := CompileScenarioToWorldLines(sc)
+	lines, err := CompileScenarioToWorldLines(sc)
+	if err != nil {
+		t.Fatalf("CompileScenarioToWorldLines: %v", err)
+	}
 	if len(lines) != 1 {
 		t.Fatalf("worldlines = %d, want 1", len(lines))
 	}
@@ -164,19 +167,39 @@ func TestCompileScenarioToWorldLines_Xiyou(t *testing.T) {
 	if err := l.Validate(); err != nil {
 		t.Errorf("worldline.Validate(): %v", err)
 	}
-	// Both milestones must bind to npc-tang_sanzang under the new IDs.
+	// Milestone IDs are positional (directive 2): m1, m2, ... by H2 order.
+	wantMilestoneIDs := []string{"m1", "m2"}
+	if len(l.Milestones) != len(wantMilestoneIDs) {
+		t.Fatalf("milestones = %d, want %d", len(l.Milestones), len(wantMilestoneIDs))
+	}
+	for i, want := range wantMilestoneIDs {
+		if l.Milestones[i].ID != want {
+			t.Errorf("milestone[%d].ID = %q, want %q", i, l.Milestones[i].ID, want)
+		}
+	}
+	// Both milestones must bind to npc-tang_sanzang under the new IDs, and
+	// no number-valued payload survives (trust:0.3 was dropped, directive 1).
 	for _, m := range l.Milestones {
 		for _, e := range m.Effects {
 			if e.Kind == worldmodel.EffectUpdateEntityState && e.TargetID != "npc-tang_sanzang" {
 				t.Errorf("effect targets %q, expected npc-tang_sanzang", e.TargetID)
 			}
+			for key, v := range e.Payload {
+				if v.Kind == worldmodel.ValueKindNumber {
+					t.Errorf("effect payload %q is number-valued %v; v1 author files emit zero numbers", key, v.Raw)
+				}
+			}
 		}
 	}
 }
 
-func TestCompileScenarioToWorldLines_UnknownScenario(t *testing.T) {
+func TestCompileScenarioToWorldLines_NoWorldlines(t *testing.T) {
 	sc := &Scenario{ID: "completely-unknown", PlayerIndex: -1}
-	if got := CompileScenarioToWorldLines(sc); got != nil {
-		t.Errorf("expected nil worldlines for unknown scenario, got %v", got)
+	got, err := CompileScenarioToWorldLines(sc)
+	if err != nil {
+		t.Fatalf("CompileScenarioToWorldLines: %v", err)
+	}
+	if got != nil {
+		t.Errorf("expected nil worldlines when scenario has no worldlines/ dir, got %v", got)
 	}
 }

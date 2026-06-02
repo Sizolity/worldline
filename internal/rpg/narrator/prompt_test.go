@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sizolity/worldline/internal/rpg/role"
 	"github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/world/view"
-	"github.com/sizolity/worldline/internal/rpg/role"
 )
 
 // charMem builds a minimally-valid character-owned MemoryRecord for tests.

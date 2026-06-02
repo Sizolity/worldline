@@ -367,4 +367,3 @@ func hasPromptTag(tags []string, target string) bool {
 	}
 	return false
 }
-

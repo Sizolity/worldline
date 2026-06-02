@@ -5,9 +5,9 @@ import (
 
 	einotool "github.com/cloudwego/eino/components/tool"
 
-	"github.com/sizolity/worldline/internal/world/model"
 	"github.com/sizolity/worldline/internal/rpg/role"
 	"github.com/sizolity/worldline/internal/rpg/tools"
+	"github.com/sizolity/worldline/internal/world/model"
 )
 
 // Tools delegates to tools.NewDisclosedTools, which applies progressive

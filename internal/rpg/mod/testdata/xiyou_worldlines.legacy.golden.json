@@ -1,0 +1,73 @@
+[
+  {
+    "id": "wl_shitu",
+    "thread_id": "thread-2",
+    "visibility": "hidden",
+    "current_stage": "初行",
+    "drift": {
+      "scene": 0.05,
+      "day": 0.2,
+      "chapter": 0.4
+    },
+    "milestones": [
+      {
+        "id": "m_xianxi",
+        "condition": {
+          "kind": "thread_tension_gte",
+          "args": {
+            "thread_id": "thread-2",
+            "threshold": 0.3
+          }
+        },
+        "effects": [
+          {
+            "kind": "update_entity_state",
+            "target_id": "npc-tang_sanzang",
+            "payload": {
+              "disposition": {
+                "kind": "string",
+                "raw": "微疑"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "m_jueche",
+        "condition": {
+          "kind": "thread_tension_gte",
+          "args": {
+            "thread_id": "thread-2",
+            "threshold": 0.6
+          }
+        },
+        "effects": [
+          {
+            "kind": "update_thread",
+            "target_id": "thread-2",
+            "payload": {
+              "status": {
+                "kind": "string",
+                "raw": "active"
+              }
+            }
+          },
+          {
+            "kind": "update_entity_state",
+            "target_id": "npc-tang_sanzang",
+            "payload": {
+              "disposition": {
+                "kind": "string",
+                "raw": "心生芥蒂"
+              },
+              "trust": {
+                "kind": "number",
+                "raw": 0.3
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

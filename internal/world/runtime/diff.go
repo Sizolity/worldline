@@ -349,7 +349,6 @@ func diffThreadFields(a, b model.WorldThread) []FieldDelta {
 	return deltas
 }
 
-
 func eventIDs(events []model.WorldEvent) map[string]bool {
 	m := make(map[string]bool, len(events))
 	for _, e := range events {

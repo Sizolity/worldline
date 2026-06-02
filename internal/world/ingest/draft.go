@@ -240,12 +240,12 @@ func mergeDraftMemory(low, high DraftMemory) DraftMemory {
 // Draft holds the raw extraction output from a Parser before validation
 // and compilation into world model types.
 type Draft struct {
-	Canon     *DraftCanon    `json:"canon,omitempty"`
-	Entities  []DraftEntity  `json:"entities,omitempty"`
+	Canon     *DraftCanon     `json:"canon,omitempty"`
+	Entities  []DraftEntity   `json:"entities,omitempty"`
 	Relations []DraftRelation `json:"relations,omitempty"`
-	Facts     []DraftFact    `json:"facts,omitempty"`
-	Threads   []DraftThread  `json:"threads,omitempty"`
-	Memories  []DraftMemory  `json:"memories,omitempty"`
+	Facts     []DraftFact     `json:"facts,omitempty"`
+	Threads   []DraftThread   `json:"threads,omitempty"`
+	Memories  []DraftMemory   `json:"memories,omitempty"`
 }
 
 type DraftCanon struct {
@@ -257,10 +257,10 @@ type DraftCanon struct {
 }
 
 type DraftEntity struct {
-	ID          string   `json:"id"`
-	Type        string   `json:"type"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
+	ID          string `json:"id"`
+	Type        string `json:"type"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
 	// Aliases is the set of additional human-readable names for this entity
 	// (nicknames, epithets, translations). The compiler dedups and unions
 	// these with any existing entity Aliases.

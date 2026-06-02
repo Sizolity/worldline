@@ -1,6 +1,6 @@
 // Package session orchestrates the RPG beat pipeline using Eino's ReAct agent.
 // The GM role (injected via role.GM) controls prompt generation, tool selection,
-// and action suggestion. See rpg/gm/ for concrete GM implementations.
+// and action suggestion. See rpg/narrator/ for concrete GM implementations.
 //
 // Session itself is pure orchestration — no LLM logic, no prompt construction,
 // no effect application. Each beat:
@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
-	"path/filepath"
 
 	"github.com/sizolity/worldline/internal/agent/react"
 	"github.com/sizolity/worldline/internal/rpg/fog"
@@ -86,7 +85,7 @@ func New(cfg Config) (*Session, error) {
 	if maxStep <= 0 {
 		maxStep = 10
 	}
-	worldsDir := filepath.Join(cfg.WorkspacePath, "worlds")
+	worldsDir := store.WorldsDir(cfg.WorkspacePath)
 	sess := &Session{
 		gm:         cfg.GM,
 		players:    cfg.Players,

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sizolity/worldline/internal/world/director"
 	"github.com/sizolity/worldline/internal/world/model"
+	"github.com/sizolity/worldline/internal/world/textutil"
 )
 
 // ConflictResolver resolves a single merge conflict.
@@ -31,10 +31,10 @@ type ConflictInput struct {
 
 // Resolution is the LLM's decision for a conflict.
 type Resolution struct {
-	Pick   string            `json:"pick"`
-	Entity *model.Entity     `json:"entity,omitempty"`
+	Pick   string             `json:"pick"`
+	Entity *model.Entity      `json:"entity,omitempty"`
 	Thread *model.WorldThread `json:"thread,omitempty"`
-	Reason string            `json:"reason"`
+	Reason string             `json:"reason"`
 }
 
 const (
@@ -89,7 +89,7 @@ func (r *LLMConflictResolver) Resolve(ctx context.Context, input ConflictInput) 
 	if err != nil {
 		return Resolution{}, fmt.Errorf("llm resolve: %w", err)
 	}
-	response = director.StripMarkdownFences(response)
+	response = textutil.StripMarkdownFences(response)
 
 	var res Resolution
 	if err := json.Unmarshal([]byte(response), &res); err != nil {
@@ -218,4 +218,3 @@ func applyResolution(out *model.World, conflict MergeConflict, res Resolution, s
 		}
 	}
 }
-

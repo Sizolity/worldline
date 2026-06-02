@@ -14,7 +14,7 @@ type WorldLister interface {
 
 // LineageNode represents one world in a lineage graph.
 type LineageNode struct {
-	WorldID  model.WorldID  `json:"world_id"`
+	WorldID  model.WorldID   `json:"world_id"`
 	ForkInfo *model.ForkInfo `json:"fork,omitempty"`
 }
 
