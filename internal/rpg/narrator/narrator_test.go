@@ -109,6 +109,46 @@ func TestNarrator_SystemPrompt(t *testing.T) {
 	}
 }
 
+// TestNarrator_SystemPrompt_StrongSetChoicesMandate locks down the
+// post-3a/3c prompt tightening: the engine compliance trailer must
+// contain the explicit "set_choices is mandatory at end of every reply"
+// language plus a positive example, because live data showed a ~17%
+// model-discipline miss rate when the mandate was softer. A future
+// refactor that quietly relaxes this wording would silently regress
+// fallback rate, so we assert the load-bearing phrases here.
+//
+// Locked-down phrases (changing these requires updating the test
+// deliberately, not by accident):
+//   - "收尾必调" — the closing-call mandate header
+//   - "无论叙事如何结束" — defeats the model's "narrative feels
+//     complete, no tool call needed" rationalization
+//   - "正确的收尾示范" + "错误示范" — both positive and negative
+//     examples are present, which empirically reduces miss rate
+//   - "无论叙事多完整、多自然，都算违规" — explicit anti-rationalization
+func TestNarrator_SystemPrompt_StrongSetChoicesMandate(t *testing.T) {
+	n, _ := New(&mockSuggestAgent{}, WithStyle(loadTestStyle(t)))
+	w := testWorld()
+	prompt := n.SystemPrompt(nil, role.PromptOptions{
+		WorldCtx:     testWorldCtx(w),
+		NarrativeCtx: testNarrativeCtx(w),
+	})
+
+	for _, want := range []string{
+		"收尾必调",
+		"无论叙事如何结束",
+		"正确的收尾示范",
+		"错误示范",
+		"无论叙事多完整、多自然，都算违规",
+		// SetChoicesToolName referenced (in code-formatted form, so
+		// the model can't miss it):
+		"`" + SetChoicesToolName + "`",
+	} {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("prompt missing load-bearing compliance phrase %q — was the trailer accidentally weakened?", want)
+		}
+	}
+}
+
 func TestNarrator_SystemPrompt_WithFog(t *testing.T) {
 	n, _ := New(&mockSuggestAgent{}, WithStyle(loadTestStyle(t)))
 	w := testWorld()
@@ -155,15 +195,19 @@ func TestNarrator_Tools_BaseOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Tools(): %v", err)
 	}
-	// Base-only (no rules, no mutable state, no fog) still includes the
-	// five always-on tools: get_entity_state, advance_time, and the three
-	// internal randomness tools (random / chance / weighted_choice). roll is
-	// shelved in v1, so it is not disclosed here.
-	if got, want := len(invokable), 5; got != want {
-		t.Errorf("len(tools) = %d, want %d (get_entity_state + advance_time + random + chance + weighted_choice)", got, want)
+	// Base-only (no rules, no mutable state, no fog) discloses the
+	// five always-on game tools (get_entity_state, advance_time, and the
+	// three internal randomness tools random / chance / weighted_choice;
+	// roll is shelved in v1) PLUS the always-on set_choices tool that
+	// the beat agent calls inline to emit next-step options. Six total.
+	if got, want := len(invokable), 6; got != want {
+		t.Errorf("len(tools) = %d, want %d (5 game tools + set_choices)", got, want)
 	}
 	names := toolNames(t, invokable)
-	for _, want := range []string{"get_entity_state", "advance_time", "random", "chance", "weighted_choice"} {
+	for _, want := range []string{
+		"get_entity_state", "advance_time", "random", "chance", "weighted_choice",
+		SetChoicesToolName,
+	} {
 		if !names[want] {
 			t.Errorf("expected %q to be disclosed, got %v", want, names)
 		}
@@ -191,6 +235,7 @@ func TestNarrator_Tools_WithFog(t *testing.T) {
 	for _, want := range []string{
 		"get_entity_state", "advance_time", "random", "chance", "weighted_choice",
 		"lookup_rules", "explore_knowledge",
+		SetChoicesToolName,
 	} {
 		if !names[want] {
 			t.Errorf("expected %q to be disclosed, got %v", want, names)

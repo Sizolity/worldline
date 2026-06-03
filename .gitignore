@@ -1,9 +1,6 @@
 # --- build artifacts ---
 /bin/
-rpg-cli
-rpg-cli.exe
-rpg-server
-rpg-server.exe
+
 coverage.out
 
 # --- editors / IDEs ---

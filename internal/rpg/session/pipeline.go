@@ -2,8 +2,11 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/cloudwego/eino/schema"
 
@@ -51,6 +54,27 @@ func (s *Session) runBeatStream(ctx context.Context, input BeatInput, narrativeC
 // written into *result.Err and signal early termination; the deferred
 // cleanup in runBeatStream still closes channels and delivers the result.
 func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativeCh chan<- string, result *BeatResult) {
+	tmr := newBeatTimer()
+	// Capture the trace into the result on every return path (including
+	// early errors) so the CLI can print it AFTER the beat output instead
+	// of the beat goroutine writing it mid-stream.
+	defer func() { result.TimingTrace = tmr.format(input.WorldID) }()
+
+	// Join the previous beat's background lorekeeper task before we touch the
+	// world on disk. It may still be merging + re-saving the snapshot, and we
+	// must (a) avoid racing its writer and (b) LoadSnapshot the lore-enriched
+	// world it produced. Because it completed after the prior beat had already
+	// returned, its outcome surfaces on THIS beat's result as PrevLore*.
+	if prev := s.joinPendingLore(); prev != nil {
+		result.PrevLoreErr = prev.loreErr
+		result.PrevLoreReport = prev.report
+		result.PrevLoreDur = prev.dur
+		if prev.saveErr != nil {
+			result.PrevLoreErr = errors.Join(result.PrevLoreErr, prev.saveErr)
+		}
+	}
+	tmr.mark("lore_join") // wait for prior beat's background lore (≈0 if it finished during think time)
+
 	world, err := s.store.LoadSnapshot(ctx, input.WorldID)
 	if err != nil {
 		result.Err = fmt.Errorf("load world: %w", err)
@@ -108,18 +132,54 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 		FogEnabled:   s.fogEnabled,
 	})
 
+	tmr.mark("prep") // load + fog + tools + views + system prompt
+
+	// Recap / prologue beats (input.MinimalTools) are pure narration of
+	// context that is ALREADY in the system prompt, so they need no game
+	// tools. Handing the beat agent an EMPTY toolset makes the model
+	// physically unable to emit tool_calls, so the ReAct branch routes
+	// model→END after a SINGLE round-trip — eliminating the several
+	// sequential pre-narrative tool calls that ballooned resume's
+	// beat_ttfc to ~17s. Unlike merely lowering MaxStep on the full
+	// toolset, an empty toolset cannot trip eino's ErrExceedMaxSteps (the
+	// model never asks to loop). MaxStep=1 is a safe belt-and-suspenders:
+	// eino checks `step >= maxSteps` at the top of each super-step and the
+	// model→END path returns at step 0 (isEnd) before the counter reaches
+	// 1, so it never errors here — whereas with tools bound the same cap
+	// WOULD error on the first tool call, which is exactly why the two go
+	// together. The normal (full-toolset) path is left byte-for-byte
+	// unchanged.
+	beatTools := gmTools
+	maxStep := s.maxStep
+	if input.MinimalTools {
+		beatTools = nil
+		maxStep = 1
+	}
+
+	beatStart := time.Now()
 	stream := s.beatAgent.Run(ctx, react.Request{
 		Messages: []*schema.Message{
 			schema.SystemMessage(systemPrompt),
 			schema.UserMessage(input.Action.Content),
 		},
-		Tools:   gmTools,
-		MaxStep: s.maxStep,
+		Tools:   beatTools,
+		MaxStep: maxStep,
 	})
 
 	var narrativeBuf strings.Builder
+	gotFirstChunk := false
+	var lastChunkAt time.Time
 	for chunk := range stream.Narrative {
+		if !gotFirstChunk {
+			// Time-to-first-chunk isolates the ReAct "reason + tool-call"
+			// round-trips (which produce no narrative) from the final
+			// streamed narration. A large gap here means the bottleneck is
+			// the tool-calling loop, not the post-narrative pipeline.
+			tmr.set("beat_ttfc", time.Since(beatStart))
+			gotFirstChunk = true
+		}
 		narrativeBuf.WriteString(chunk)
+		lastChunkAt = time.Now()
 		select {
 		case <-ctx.Done():
 			result.Err = ctx.Err()
@@ -128,13 +188,52 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 		}
 	}
 
+	// Narrative content phase ended (react.go closes stream.Narrative on
+	// the first tool_call chunk, not on full stream end). The model is
+	// now streaming set_choices tool_call args, which we still need to
+	// await on <-stream.Done; but the narrative TEXT is complete, so
+	// we can kick off lorekeeper Phase A (LLM extract from narrative)
+	// IMMEDIATELY and let it overlap with the tool_call tail + apply
+	// effects + synchronous save. The next beat's lore_join joins the
+	// task at this earlier start time, so any wall-time wait shrinks
+	// by the inline_choices + effects + save tail (~1s in practice).
+	//
+	// beatEvent.ID is computed from world.Clock.Sequence BEFORE the
+	// per-beat increment downstream (line where world.Clock.Sequence++
+	// runs), so the ID we pass here matches what beatEvent.ID becomes
+	// later — provenance traceability is preserved.
+	narrative := narrativeBuf.String()
+	beatEventID := fmt.Sprintf("beat_%s_%d", input.WorldID, world.Clock.Sequence)
+	var loreTask *pendingLore
+	if s.lorekeeper != nil {
+		loreTask = s.startLoreExtraction(ctx, input.WorldID, beatEventID, narrative)
+		// Settle the lore task exactly once on every return path: the
+		// success path below attaches the post-effects world (which
+		// flips task.attached so this deferred abort becomes a no-op),
+		// every early-return error path falls through to this defer
+		// and aborts the task so its goroutine doesn't leak waiting
+		// on a world that will never arrive.
+		defer s.abortLoreTask(loreTask)
+	}
+
 	beatResult := <-stream.Done
+	tmr.mark("beat") // total beat-agent time (reason/tool-loop + streamed narration + inline tool_call tail)
+	// inline_choices = the time between the LAST narrative chunk and the
+	// stream closing. With the inline-choices contract, this tail is
+	// where the model is streaming the set_choices tool_call args after
+	// the prose has ended; it directly measures "extra wall-time the
+	// player waits beyond seeing the narrative finish before the agent
+	// hands over". The old separate SuggestActions LLM call was ~2s;
+	// this should be a few hundred ms when the contract is healthy.
+	// Only meaningful when at least one narrative chunk arrived.
+	if !lastChunkAt.IsZero() {
+		tmr.set("inline_choices", time.Since(lastChunkAt))
+	}
 	if beatResult.Err != nil {
 		result.Err = fmt.Errorf("beat agent: %w", beatResult.Err)
 		return
 	}
 
-	narrative := narrativeBuf.String()
 	effects := tc.GetPendingEffects()
 
 	// In-fiction time advance declared by the narrator via advance_time.
@@ -155,7 +254,11 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 	// The narrative is truncated to keep the events section of the prompt
 	// bounded; the full narrative is still returned in BeatOutput.Narrative.
 	beatEvent := worldmodel.WorldEvent{
-		ID:          worldmodel.EventID(fmt.Sprintf("beat_%s_%d", input.WorldID, world.Clock.Sequence)),
+		// ID must equal the beatEventID we already passed to the
+		// lorekeeper task above — provenance traceability requires the
+		// same ID land in the event log and the source-doc the
+		// extracted lore points back to.
+		ID:          worldmodel.EventID(beatEventID),
 		Type:        worldmodel.EventTypeNote,
 		Source:      worldmodel.EventSourceUser,
 		Description: buildBeatEventDescription(input.Action.Content, narrative),
@@ -224,60 +327,84 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 		}
 	}
 
-	// === Lorekeeper extraction ===
-	// Translate the just-streamed narrative into structured world
-	// knowledge (entities/relations/facts/threads/memories) and merge
-	// it into the world snapshot. Runs after player effects, clock
-	// advance, and WorldLine tick so the draft can reference any new
-	// events those steps produced. Failure here is non-fatal: the world
-	// remains in its post-effects state and the beat completes with
-	// LoreErr surfaced.
+	tmr.mark("effects") // apply event + clock advance + worldline tick (local, no LLM)
+
+	// === Post-narrative work ===
+	// Iterative measurement collapsed the post-narrative stall in two
+	// stages:
+	//  (1) Lorekeeper extraction (~5-6.5s) — moved OFF the critical path
+	//      into a background task joined by the next beat (see
+	//      startLoreTask / joinPendingLore). Overlaps player read/think
+	//      time so lore_join is reliably ~0 on subsequent beats.
+	//  (2) SuggestActions (~1.9s) — collapsed INTO the beat agent via
+	//      the set_choices inline-schema tool. The beat agent is now
+	//      required to call set_choices as the last element of its
+	//      streamed assistant message; we extract the choices from the
+	//      message's tool_calls (Result.ToolCalls). No separate LLM
+	//      round-trip on the happy path. SuggestActions remains as the
+	//      graceful-degrade fallback for when the model omits the tool
+	//      call or emits unparseable args.
 	//
-	// Source-doc ID is beatEvent.ID by design: every lore item compiled
-	// from this beat is traceable back to the single EventLog entry that
-	// produced it (via CompileReport.Provenance.SourceRefs and any
-	// downstream caller that records the source doc). Do not change this
-	// without updating callers that rely on the invariant.
-	if s.lorekeeper != nil {
-		newWorld, report, loreErr := s.runLorekeeper(ctx, world, string(beatEvent.ID), narrative)
-		if loreErr != nil {
-			result.LoreErr = loreErr
-		} else {
-			world = newWorld
-			result.LoreReport = report
+	// Ordering & safety:
+	//  - Choice resolution (inline vs fallback) happens BEFORE the
+	//    synchronous save so the result we hand to the caller is
+	//    complete; the disk write is then the last critical-path step.
+	//  - Background lorekeeper task is kicked off AFTER the synchronous
+	//    save so its enriched re-save never races a concurrent writer
+	//    (the next beat joins it before LoadSnapshot, see joinPendingLore).
+	// Scenes that opt out of choice generation (recap / prologue mod
+	// styles whose prompt explicitly says "末尾不列选项") set
+	// input.SuppressChoices=true. Skipping the entire resolve path
+	// avoids the ~2s SuggestActions fallback that would otherwise
+	// fire on those beats — see BeatInput.SuppressChoices docs.
+	var (
+		choices    role.ActionChoices
+		suggestErr error
+	)
+	if input.SuppressChoices {
+		if os.Getenv("WORLDLINE_DEBUG_TIMING") != "" {
+			fmt.Fprintln(os.Stderr, "[choices] suppressed (BeatInput.SuppressChoices) — recap/prologue scene")
 		}
+	} else {
+		choices, suggestErr = s.resolveBeatChoices(ctx, beatResult.ToolCalls, world, disclosure, narrative, tmr)
 	}
 
+	// Persist the post-effects world synchronously (durable + immediate
+	// error feedback). The background lorekeeper will re-save an
+	// enriched copy strictly AFTER this write because the next beat
+	// joinPendingLore before its own LoadSnapshot/save.
+	saveStart := time.Now()
 	if err := s.store.SaveSnapshot(ctx, world); err != nil {
 		result.Err = fmt.Errorf("save world: %w", err)
 		return
 	}
-
 	if s.fogEnabled {
 		if err := s.fogStore.Save(input.WorldID, disclosure); err != nil {
 			result.Err = fmt.Errorf("save disclosure: %w", err)
 			return
 		}
 	}
+	tmr.set("save", time.Since(saveStart))
 
-	// Re-filter post-effect world so SuggestActions only sees what the PL can.
-	visibleAfter := world
-	if s.fogEnabled {
-		visibleAfter = fog.FilterWorld(world, disclosure)
-	}
-	// SuggestActions is a "nice to have" — it shapes UX (suggested next
-	// options) but is not load-bearing for the world simulation. Errors
-	// here (transient LLM JSON failures, network blips during the second
-	// LLM call) must NOT discard the narrative and applied effects we
-	// already committed above. We surface the error via SuggestErr so the
-	// caller can log/display, and return an empty Choices set with just
-	// the custom slot so the player can still continue with free-form
-	// input.
-	choices, suggestErr := s.gm.SuggestActions(ctx, visibleAfter, s.players, narrative)
-	if suggestErr != nil {
-		choices = role.ActionChoices{
-			Options: []role.ActionOption{{Type: role.ActionTypeCustom}},
-		}
+	// === Background lorekeeper extraction (Phase B handoff) ===
+	// Phase A (LLM extract from narrative) has been running in the
+	// background since narrative content streaming ended; see the
+	// startLoreExtraction call earlier in this function. Now that we
+	// have the post-effects world saved synchronously, hand it to the
+	// task so Phase B (Compile + re-save enriched snapshot) can
+	// proceed. If Phase A finished during the stream tail + effects +
+	// save window, Phase B starts immediately on this attach call.
+	// `world` is handed by value; CompileDraft detaches before mutating
+	// so the result.World we expose below is never mutated by the task.
+	//
+	// Source-doc ID was passed to startLoreExtraction up top using the
+	// same beatEventID literal we used to construct beatEvent.ID here,
+	// preserving the EventLog↔lore provenance invariant.
+	//
+	// attachLoreWorld flips loreTask.attached=true so the deferred
+	// abortLoreTask becomes a no-op — exactly-once settlement.
+	if loreTask != nil {
+		s.attachLoreWorld(loreTask, world)
 	}
 
 	result.World = world
@@ -285,6 +412,79 @@ func (s *Session) runBeatPipeline(ctx context.Context, input BeatInput, narrativ
 	result.ToolEffects = effects
 	result.Choices = choices
 	result.SuggestErr = suggestErr
+}
+
+// resolveBeatChoices implements the inline-first / fallback-to-suggest
+// choice resolution policy. The happy path is pure CPU: parse the beat
+// agent's set_choices tool_call from the streamed assistant message
+// (zero extra LLM calls). The fallback path is the legacy
+// SuggestActions LLM round-trip (~2s); it runs only when the model
+// omitted the inline call or its args could not be parsed.
+//
+// On total failure (both paths exhausted) the beat does NOT abort —
+// choices degrade to a single custom slot so the player keeps agency
+// via free-form input. suggestErr surfaces the diagnostic for the CLI
+// to display; the world state and narrative remain durable regardless.
+//
+// Timing labels written:
+//   - inline_choices: already set in the caller above (the time from
+//     last narrative chunk to stream close). Present always.
+//   - suggest: SuggestActions wall-time. ONLY set when the fallback
+//     fires — its absence in a normal trace is a positive signal that
+//     the inline contract is healthy.
+func (s *Session) resolveBeatChoices(
+	ctx context.Context,
+	toolCalls []schema.ToolCall,
+	world worldmodel.World,
+	disclosure fog.DisclosureState,
+	narrative string,
+	tmr *beatTimer,
+) (role.ActionChoices, error) {
+	inlineChoices, found, parseErr := s.gm.ExtractInlineChoices(toolCalls)
+	if found && parseErr == nil {
+		return inlineChoices, nil
+	}
+	// Fallback diagnostic: gate behind WORLDLINE_DEBUG_TIMING so it
+	// only surfaces when the operator is already inspecting timings;
+	// no per-beat noise during normal play. The seen tool_call names
+	// list is the most useful signal in practice — it distinguishes
+	// "model emitted no tool_calls at all" (discipline gap, prompt
+	// engineering needed) from "model emitted SOME tool_calls but
+	// none was set_choices" (name mismatch, schema drift, or a stray
+	// world-mutating tool call after the narrative).
+	if os.Getenv("WORLDLINE_DEBUG_TIMING") != "" {
+		seenNames := make([]string, 0, len(toolCalls))
+		for _, tc := range toolCalls {
+			seenNames = append(seenNames, tc.Function.Name)
+		}
+		narrativeRunes := len([]rune(narrative))
+		switch {
+		case parseErr != nil:
+			fmt.Fprintf(os.Stderr,
+				"[choices] inline parse failed (%v); narrative_runes=%d tool_calls=%d seen=%v; falling back to SuggestActions\n",
+				parseErr, narrativeRunes, len(toolCalls), seenNames,
+			)
+		case !found:
+			fmt.Fprintf(os.Stderr,
+				"[choices] inline set_choices missing; narrative_runes=%d tool_calls=%d seen=%v; falling back to SuggestActions\n",
+				narrativeRunes, len(toolCalls), seenNames,
+			)
+		}
+	}
+
+	visibleForSuggest := world
+	if s.fogEnabled {
+		visibleForSuggest = fog.FilterWorld(world, disclosure)
+	}
+	suggestStart := time.Now()
+	choices, err := s.gm.SuggestActions(ctx, visibleForSuggest, s.players, narrative)
+	tmr.set("suggest", time.Since(suggestStart))
+	if err != nil {
+		return role.ActionChoices{
+			Options: []role.ActionOption{{Type: role.ActionTypeCustom}},
+		}, err
+	}
+	return choices, nil
 }
 
 // beatNarrativeBudget caps the per-beat narrative summary placed into the

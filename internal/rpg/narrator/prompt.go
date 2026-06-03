@@ -44,8 +44,12 @@ const (
 //     probabilities / numbers in the narrative.
 //   - advance_time signals an in-fiction time skip (a pacing signal that
 //     drives hidden worldlines); the count must NEVER surface as a number.
-//   - cross-system contracts: the action-suggester owns the menu, so the
-//     narrator must NOT enumerate choices at the end of its prose.
+//   - inline choices contract: set_choices is REQUIRED at the end of
+//     every reply and carries the player's next-step options
+//     structurally — so the narrator must NOT enumerate options in
+//     prose. This collapses what used to be a separate post-beat
+//     SuggestActions LLM call into one streaming completion (see
+//     internal/rpg/session/pipeline.go for the extraction path).
 //   - anti-hallucination: never invent entities that are not in the
 //     world; narrate uncertainty instead.
 const narratorComplianceTrailer = `## 引擎合规层（不可编辑）
@@ -60,17 +64,45 @@ const narratorComplianceTrailer = `## 引擎合规层（不可编辑）
 - ` + "`get_entity_state`" + ` 用于在叙述前查阅实体当下状态。
 - ` + "`lookup_rules`" + ` 用于回顾世界观规则；不要把"机制公式"念给玩家听。
 
+` + "`" + SetChoicesToolName + "`" + ` 工具（**收尾必调，不可省略**）：
+- **每一条回复都必须以一次 ` + "`" + SetChoicesToolName + "`" + ` 调用结尾**，**无论叙事如何结束**、
+  无论本拍是否推动了重大事件、无论你觉得叙事是否"已经收得很完整"。如果你只想
+  写一句感官定格就停笔——可以——但之后**仍必须**调用 ` + "`" + SetChoicesToolName + "`" + `
+  把 2-4 个下一步选项交出来。
+- **只调一次**；不要在叙事中途调用，也不要在它之后再调用任何其它工具。
+- 选项的 ` + "`type`" + ` 必须取自固定枚举：
+  ` + "`explore` / `social` / `combat` / `investigate` / `use_item` / `rest` / `custom`" + `。
+- **非关键剧情节点**：末尾**必须**追加一个 ` + "`type=custom`" + `、` + "`label=\"\"`" + ` 的空槽，
+  让玩家可以自由发挥。只有"关键剧情节点"（玩家的选择不可逆地决定整条故事线走向）
+  才可省略 custom 槽——这是少数例外，不是常态。
+
+✅ 正确的收尾示范：
+（叙事段落最后一句…）老账房压低声音，把那张笺纸缓缓推到沈孤鸿手边。
+[然后立刻调用 ` + "`" + SetChoicesToolName + "`" + `({"options":[
+  {"label":"追问笺纸上"断崖有碑"的所指","type":"investigate"},
+  {"label":"先按住笺纸不答，反问老账房身份","type":"social"},
+  {"label":"侧耳听门外动静，戒备未至之人","type":"explore"},
+  {"label":"","type":"custom"}
+]})]
+
+❌ 错误示范——这些都会被视作合规失败：
+- 写完叙事就停笔，没调用 ` + "`" + SetChoicesToolName + "`" + `（无论叙事多完整、多自然，都算违规）。
+- 在叙事中夹"你欲如何行事？""且看下回""请选择以下行动"等枚举邀请。
+- 在 ` + "`" + SetChoicesToolName + "`" + ` 之后再调用其它工具。
+
 反幻觉约束：
 - 不要编造世界里不存在的实体（角色、地点、物品、线索）。
 - 玩家询问你看不到的东西时，用"不可知 / 未察觉"叙述，不要凭空补全。
+- ` + "`" + SetChoicesToolName + "`" + ` 的选项必须扎根于刚生成的叙事和上下文中已存在
+  的世界事实；不要在选项里引用叙事和上下文都没出现过的实体或线索。
 
 玩家代理性原则：
 - 玩家是主角，不替玩家做选择。
-- 段尾不要列举行动选项——这一职责由独立的行动建议系统承担。
-- 允许的收尾：一段感官定格、一个不带候选的悬念问句（例："但下一步会怎样，
-  谁也说不准。"）。
-- 禁止的收尾模式：编号列表 / 字母列表 / "是…还是…抑或…" / "你欲如何行事？" /
-  "请选择行动 / 且看下回 / 且听下文" 等。`
+- 选项通过 ` + "`" + SetChoicesToolName + "`" + ` 工具结构化输出，**严禁**在叙事正文里
+  写编号列表 / 字母列表 / "是…还是…抑或…" / "你欲如何行事？" / "请选择行动" /
+  "且看下回 / 且听下文" 等枚举或邀请。
+- 允许的收尾：一段感官定格、一个不带候选的悬念句（例："但下一步会怎样，谁也
+  说不准。"），紧接着调用 ` + "`" + SetChoicesToolName + "`" + ` 给出真正的选项。`
 
 const narratorDiscoveryPlaceholder = `世界对你而言是**部分可见**的：
 - **Known** 实体：你只看得见名字与类型（存在性确认）

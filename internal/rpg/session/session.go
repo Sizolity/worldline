@@ -5,21 +5,26 @@
 // Session itself is pure orchestration — no LLM logic, no prompt construction,
 // no effect application. Each beat:
 //
-//  1. Loads the world (+ disclosure if fog enabled)
+//  1. Joins the previous beat's background Lorekeeper task (if any), then
+//     loads the world (+ disclosure if fog enabled)
 //  2. Asks the GM for the disclosed toolset and the system prompt
 //  3. Runs the Eino ReAct agent with the resulting tools + prompt
 //  4. Applies any pending effects via world/runtime.ApplyEvent
-//  5. Runs the Lorekeeper (if configured) to extract structured world
-//     knowledge from the narrative and compile it into the snapshot.
-//     Failure is non-fatal; surfaces via BeatResult.LoreErr.
-//  6. Persists the updated world + disclosure
-//  7. Asks the GM to suggest next-step ActionChoices for the PL
+//  5. Persists the post-effects world + disclosure synchronously
+//  6. Asks the GM to suggest next-step ActionChoices for the PL (the only
+//     post-narrative LLM call on the player's critical path)
+//  7. Kicks off the Lorekeeper (if configured) in a BACKGROUND task to
+//     extract structured world knowledge from the narrative and re-persist
+//     an enriched snapshot. It is joined by the next beat (or by
+//     AwaitPendingLore on shutdown); its outcome surfaces on the next beat's
+//     BeatResult.PrevLore* fields. Failure is non-fatal.
 package session
 
 import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"sync"
 
 	"github.com/sizolity/worldline/internal/agent/react"
 	"github.com/sizolity/worldline/internal/rpg/fog"
@@ -31,6 +36,14 @@ import (
 )
 
 // Session manages a single RPG game session tied to one world.
+//
+// Beats are expected to run serially (the canonical caller drains a beat's
+// NarrativeStream and reads Done before starting the next). The lorekeeper
+// extraction for a beat runs in a background goroutine that outlives the beat
+// (see RunBeat); loreTask holds the most recent such task and is joined at the
+// start of the next beat — and by AwaitPendingLore on shutdown — so the world
+// on disk is never written by two goroutines at once. loreMu guards loreTask
+// against the (unsupported but defended) case of overlapping callers.
 type Session struct {
 	gm         role.GM
 	players    []role.Player
@@ -43,6 +56,9 @@ type Session struct {
 	rng        *rand.Rand
 	maxStep    int
 	fogEnabled bool
+
+	loreMu   sync.Mutex
+	loreTask *pendingLore
 }
 
 // Config holds parameters for creating a new Session.
@@ -59,11 +75,12 @@ type Config struct {
 	// apply, applies emitted events, and persists updated lines. Default off
 	// keeps existing sessions unchanged.
 	StoryEnabled bool
-	// Lorekeeper is optional. When set, after each beat the lorekeeper
-	// extracts an ingest.Draft from the narrative and compiles it into
-	// the world snapshot. When nil, the lore pipeline is skipped entirely.
-	// Lorekeeper failure never aborts a beat — errors surface via
-	// BeatResult.LoreErr.
+	// Lorekeeper is optional. When set, after each beat a BACKGROUND task
+	// extracts an ingest.Draft from the narrative and compiles it into an
+	// enriched world snapshot (joined by the next beat / AwaitPendingLore).
+	// When nil, the lore pipeline is skipped entirely. Lorekeeper failure
+	// never aborts a beat — the outcome surfaces via the next beat's
+	// BeatResult.PrevLore* fields.
 	Lorekeeper role.Lorekeeper
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	einotool "github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/schema"
 
 	"github.com/sizolity/worldline/internal/world/model"
 )
@@ -37,8 +38,40 @@ type Rulebook interface {
 }
 
 // Director handles pacing and player guidance.
+//
+// SuggestActions is the FALLBACK path: a separate post-beat LLM
+// round-trip that produces choices when the beat agent did not emit
+// them inline (see InlineChoiceParser). It's kept on every GM because
+// the engine relies on it as the safety net when inline extraction
+// fails — but on healthy beats it is never called.
 type Director interface {
 	SuggestActions(ctx context.Context, w model.World, players []Player, narrative string) (ActionChoices, error)
+}
+
+// InlineChoiceParser extracts next-step action options the beat agent
+// emitted INLINE alongside its narrative — the "inline schema" pattern
+// where the model calls a structured tool (e.g. set_choices) as the
+// final element of the same assistant message that carried the
+// streamed prose. See internal/agent/react Result.ToolCalls for how
+// these calls reach the session, and internal/rpg/narrator for the
+// canonical implementation.
+//
+// Semantics of the return tuple:
+//   - (choices, true,  nil): inline emission succeeded; session uses
+//     these choices and skips the SuggestActions fallback entirely.
+//   - (zero,    false, nil): the GM does not use the inline contract
+//     (or the model did not emit the structured call); session falls
+//     back to Director.SuggestActions.
+//   - (zero,    true,  err): the inline call WAS present but its
+//     arguments could not be parsed; session also falls back, and the
+//     err is for diagnostics (telemetry, debug stderr).
+//
+// Splitting "found" from "err" lets the session distinguish a cold
+// prompt drift ("model never called the tool") from a hot decoding
+// issue ("model called but emitted bad JSON"); both route to fallback
+// but warrant different alerting.
+type InlineChoiceParser interface {
+	ExtractInlineChoices(toolCalls []schema.ToolCall) (ActionChoices, bool, error)
 }
 
 // GM is the composite interface for a complete game master.
@@ -46,4 +79,5 @@ type GM interface {
 	Persona
 	Rulebook
 	Director
+	InlineChoiceParser
 }
